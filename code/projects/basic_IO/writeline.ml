@@ -1,3 +1,11 @@
+(*
+    Compile & Run
+    -------------
+
+    $ ocamlopt -o writeline writeline.ml
+    $ ./writeline -into filename_here
+*)
+
 let usage_msg = "writeline [-into]" in
 let into = ref "" in
 let set_filename name = into := name in
@@ -15,10 +23,3 @@ let () =
         prerr_endline "Error occured."
 
 
-(*
-    Compile & Run
-    -------------
-
-    $ ocamlopt -o writeline writeline.ml
-    $ ./writeline -into filename_here
-*)
