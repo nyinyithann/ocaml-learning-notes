@@ -1,0 +1,2 @@
+profile = ocamlformat
+sequence-blank-line = preserve-one
