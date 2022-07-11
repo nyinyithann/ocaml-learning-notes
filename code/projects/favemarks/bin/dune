@@ -1,0 +1,5 @@
+(executable
+ (public_name fm)
+ (name fm)
+ (libraries core_compat sqlite3)
+ (preprocess (pps ppx_jane)))

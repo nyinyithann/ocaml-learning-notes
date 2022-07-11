@@ -1,0 +1,5 @@
+(executable
+ (public_name omd5)
+ (name main)
+ (libraries core_compat)
+ (preprocess (pps ppx_jane)))
