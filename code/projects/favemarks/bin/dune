@@ -1,5 +1,8 @@
 (executable
+ (name main)
  (public_name fm)
- (name fm)
- (libraries core_compat sqlite3)
+ (package fm)
+ (libraries core_compat sqlite3 ANSITerminal)
  (preprocess (pps ppx_jane)))
+
+(include_subdirs unqualified)
