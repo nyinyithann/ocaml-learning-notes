@@ -1,52 +1,39 @@
 open Core
-module T = ANSITerminal
+open Common
 
-let ask_input msg =
-  T.print_string [ T.Foreground T.Blue ] (sprintf " ✏️  %s" msg);
-  printf "%!"
+let validate input = not (is_whitespace input)
+
+let get_value ~v ~msg ~retry_msg =
+  match v with
+  | None -> ask_again_if_invalid ~validate ~msg ~retry_msg ()
+  | Some x ->
+    if validate x
+    then x
+    else ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ()
 ;;
 
-let ask_retry msg = T.print_string [ T.Foreground T.Magenta ] (sprintf " 💪  %s\n" msg)
-let print_ok_msg msg = T.print_string [ T.Foreground T.Green ] (sprintf "\n ✅  %s\n" msg)
-
-let print_error_msg msg = T.print_string [ T.Foreground T.Red ] (sprintf "\n 🌶 %s\n" msg)
-
-let rec loop_input ~msg ~retry_msg =
-  ask_input msg;
-  match In_channel.input_line In_channel.stdin with
-  | None | Some "" ->
-    ask_retry retry_msg;
-    loop_input ~msg ~retry_msg
-  | Some x -> x
+let get_url v =
+  let msg = "Enter a url: "
+  and retry_msg = "A URL must be provided." in
+  get_value ~v ~msg ~retry_msg
 ;;
 
-let prompt_for_url url =
-  match url with
-  | Some u -> u
-  | None -> loop_input ~msg:"Enter a url: " ~retry_msg:"A URL must be provided."
+let get_description v =
+  let msg = "Enter description: "
+  and retry_msg = "Description must be provided." in
+  get_value ~v ~msg ~retry_msg
 ;;
 
-let prompt_for_description desc =
-  match desc with
-  | Some d -> d
-  | None ->
-    loop_input ~msg:"Enter description: " ~retry_msg:"Description must be provided."
+let get_category v =
+  let msg = "Enter main category: "
+  and retry_msg = "Main Category must be provided." in
+  get_value ~v ~msg ~retry_msg
 ;;
 
-let prompt_for_category cat =
-  match cat with
-  | Some c -> c
-  | None ->
-    loop_input ~msg:"Enter main category: " ~retry_msg:"Main Category must be provided."
-;;
-
-let prompt_for_tags tags =
-  match tags with
-  | Some t -> t
-  | None ->
-    loop_input
-      ~msg:"Enter space-delimited tags : "
-      ~retry_msg:"One or more tags must be provided."
+let get_tags v =
+  let msg = "Enter space-delimited tags : "
+  and retry_msg = "One or more tags must be provided." in
+  get_value ~v ~msg ~retry_msg
 ;;
 
 let save_bookmark ~url ~description ~category ~tags =
@@ -83,9 +70,9 @@ let command =
          (optional string)
          ~doc:"string Tags for the saving url"
      in
-     let url = prompt_for_url url
-     and description = prompt_for_description description
-     and category = prompt_for_category category
-     and tags = prompt_for_tags tags in
+     let url = get_url url
+     and description = get_description description
+     and category = get_category category
+     and tags = get_tags tags in
      fun () -> save_bookmark ~url ~description ~category ~tags)
 ;;
