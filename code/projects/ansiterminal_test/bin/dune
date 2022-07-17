@@ -1,0 +1,4 @@
+(executable
+ (public_name ansiterminal_test)
+ (name main)
+ (libraries ANSITerminal))

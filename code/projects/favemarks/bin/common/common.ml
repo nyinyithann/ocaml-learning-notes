@@ -3,6 +3,7 @@ module T = ANSITerminal
 
 type bookmark =
   { id : int
+  ; mnemonic : string
   ; url : string
   ; description : string
   ; category : string
@@ -58,4 +59,46 @@ let string_of_time (time : Time_unix.t) =
     Time_unix.format time "%d/%m/%y %H:%M:%S" ~zone:(Lazy.force Time_unix.Zone.local)
   with
   | _ -> epoch_str ()
+;;
+
+let strip_space str =
+  Str.split (Str.regexp "[ \n\r\x0c\t]+") str |> String.concat ~sep:" "
+;;
+
+let ellipsis ~len str =
+  let l = len - 3 in
+  let str_len = String.length str in
+  try
+    if str_len <= l
+    then str
+    else if l < 0
+    then ""
+    else String.slice str 0 (len - 3) ^ "..."
+  with
+  | _ -> ""
+;;
+
+let get_one_char () =
+  let termio = Caml_unix.tcgetattr Caml_unix.stdin in
+  let () =
+    Caml_unix.tcsetattr
+      Caml_unix.stdin
+      Caml_unix.TCSADRAIN
+      { termio with Caml_unix.c_icanon = false }
+  in
+  let res = Caml.input_char Caml.stdin in
+  Caml_unix.tcsetattr Core_unix.stdin Caml_unix.TCSADRAIN termio;
+  res
+;;
+
+let open_link link =
+  if not (is_whitespace link)
+  then (
+    let link =
+      if String.is_prefix ~prefix:"http://" link
+         || String.is_prefix ~prefix:"https://" " link"
+      then link
+      else "https://" ^ link
+    in
+    Caml_unix.execvp "open" [| "open"; "-a"; "Google Chrome"; link |])
 ;;

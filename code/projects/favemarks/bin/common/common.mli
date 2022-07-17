@@ -1,5 +1,6 @@
 type bookmark =
   { id : int
+  ; mnemonic : string
   ; url : string
   ; description : string
   ; category : string
@@ -23,3 +24,7 @@ val ask_again_if_invalid
 val is_whitespace : string -> bool
 val time_of_string : string -> Time_unix.t
 val string_of_time : Time_unix.t -> string
+val strip_space : string -> string
+val ellipsis : len:int -> string -> string
+val get_one_char : unit -> char
+val open_link : string -> unit

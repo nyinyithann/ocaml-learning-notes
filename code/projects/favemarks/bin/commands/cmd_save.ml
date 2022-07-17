@@ -33,7 +33,7 @@ let get_category v =
 let get_tags v =
   let msg = "Enter space-delimited tags : "
   and retry_msg = "One or more tags must be provided." in
-  get_value ~v ~msg ~retry_msg
+  get_value ~v ~msg ~retry_msg |> strip_space
 ;;
 
 let save_bookmark ~url ~description ~category ~tags =

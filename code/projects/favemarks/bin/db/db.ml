@@ -30,14 +30,29 @@ let save ~url ~description ~category ~tags =
   | e -> Error (Exn.to_string e)
 ;;
 
+let get_total_count () =
+  try
+    let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
+    let sql = sprintf "SELECT COUNT(*) FROM bookmarks" in
+    let stmt = prepare db sql in
+    ignore (step stmt);
+    Ok (column_int stmt 0)
+  with
+  | SqliteError s -> Error s
+  | e -> Error (Exn.to_string e)
+;;
+
+let mnemonics = [| "A"; "B"; "C"; "E"; "F"; "G"; "N"; "S"; "M"; "Y"; "W"; "E" |]
+
 let load ~limit ~offset =
   try
     let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
     let data_queue = Queue.create ~capacity:limit () in
     let sql =
-      sprintf "SELECT * FROM bookmarks ORDER BY id LIMIT %d OFFSET %d" limit offset
+      sprintf "SELECT * FROM bookmarks ORDER BY id DESC LIMIT %d OFFSET %d" limit offset
     in
     let stmt = prepare db sql in
+    let idx = ref 0 in
     while Poly.( = ) (step stmt) Rc.ROW do
       let id = column_int stmt 0
       and url = column_text stmt 1
@@ -48,12 +63,14 @@ let load ~limit ~offset =
       Queue.enqueue
         data_queue
         { Common.id
+        ; mnemonic = mnemonics.(!idx)
         ; url
         ; description
         ; category
         ; tags
         ; date = Common.time_of_string added
-        }
+        };
+      incr idx
     done;
     Ok data_queue
   with
