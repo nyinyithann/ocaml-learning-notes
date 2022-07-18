@@ -2,8 +2,6 @@ type bookmark =
   { id : int
   ; mnemonic : string
   ; url : string
-  ; description : string
-  ; category : string
   ; tags : string
   ; date : Time_unix.t
   }

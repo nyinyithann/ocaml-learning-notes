@@ -6,16 +6,13 @@ let db_uri =
   "/Users/jazz/ghq/github.com/nyinyithann/notes_on_ocaml/code/projects/favemarks/db/favemarks.db"
 ;;
 
-let save ~url ~description ~category ~tags =
+let save ~url ~tags =
   try
     let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
     let sql =
       sprintf
-        "INSERT INTO bookmarks(url, description, category, tags, added) VALUES('%s', \
-         '%s', '%s', '%s', '%s')"
+        "INSERT INTO bookmarks(url, tags, date) VALUES('%s', '%s', '%s')"
         url
-        description
-        category
         tags
         (Time.now () |> Time.to_string_utc)
     in
@@ -42,33 +39,75 @@ let get_total_count () =
   | e -> Error (Exn.to_string e)
 ;;
 
-let mnemonics = [| "A"; "B"; "C"; "E"; "F"; "G"; "N"; "S"; "M"; "Y"; "W"; "E" |]
+let get_search_total_count ~search_field ~search_term =
+  try
+    let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
+    let sql =
+      sprintf
+        "SELECT COUNT(*) FROM bookmarks WHERE %s LIKE \'%%%s%%\'"
+        search_field
+        search_term
+    in
+    let stmt = prepare db sql in
+    ignore (step stmt);
+    Ok (column_int stmt 0)
+  with
+  | SqliteError s -> Error s
+  | e -> Error (Exn.to_string e)
+;;
 
-let load ~limit ~offset =
+let mnemonics = [| "a"; "b"; "c"; "e"; "f"; "g"; "n"; "s"; "m"; "y"; "w"; "e" |]
+
+let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
   try
     let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
     let data_queue = Queue.create ~capacity:limit () in
     let sql =
-      sprintf "SELECT * FROM bookmarks ORDER BY id DESC LIMIT %d OFFSET %d" limit offset
+      match search_field, search_term, sort_field, sort_order with
+      | Some sf, Some st, Some stf, Some sto ->
+        sprintf
+          "SELECT * FROM bookmarks WHERE %s LIKE \'%%%s%%\' ORDER BY %s %s LIMIT %d \
+           OFFSET %d"
+          sf
+          st
+          stf
+          sto
+          limit
+          offset
+      | Some sf, Some st, Some stf, _ ->
+        sprintf
+          "SELECT * FROM bookmarks WHERE %s LIKE \'%%%s%%\' ORDER BY %s asc LIMIT %d \
+           OFFSET %d"
+          sf
+          st
+          stf
+          limit
+          offset
+      | Some sf, Some st, _, _ ->
+        sprintf
+          "SELECT * FROM bookmarks WHERE %s LIKE \'%%%s%%\' ORDER BY id desc LIMIT %d \
+           OFFSET %d"
+          sf
+          st
+          limit
+          offset
+      | _ ->
+        sprintf "SELECT * FROM bookmarks ORDER BY id DESC LIMIT %d OFFSET %d" limit offset
     in
     let stmt = prepare db sql in
     let idx = ref 0 in
     while Poly.( = ) (step stmt) Rc.ROW do
       let id = column_int stmt 0
       and url = column_text stmt 1
-      and description = column_text stmt 2
-      and category = column_text stmt 3
-      and tags = column_text stmt 4
-      and added = column_text stmt 5 in
+      and tags = column_text stmt 2
+      and date = column_text stmt 3 in
       Queue.enqueue
         data_queue
         { Common.id
         ; mnemonic = mnemonics.(!idx)
         ; url
-        ; description
-        ; category
         ; tags
-        ; date = Common.time_of_string added
+        ; date = Common.time_of_string date
         };
       incr idx
     done;

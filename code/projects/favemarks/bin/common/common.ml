@@ -5,14 +5,12 @@ type bookmark =
   { id : int
   ; mnemonic : string
   ; url : string
-  ; description : string
-  ; category : string
   ; tags : string
   ; date : Time_unix.t
   }
 
 let ask_input msg =
-  T.print_string [ T.Foreground T.Blue ] (sprintf " ✏️  %s" msg);
+  T.print_string [ T.Foreground T.Blue ] (sprintf " 🎷  %s" msg);
   printf "%!"
 ;;
 
@@ -96,7 +94,7 @@ let open_link link =
   then (
     let link =
       if String.is_prefix ~prefix:"http://" link
-         || String.is_prefix ~prefix:"https://" " link"
+         || String.is_prefix ~prefix:"https://" link
       then link
       else "https://" ^ link
     in
