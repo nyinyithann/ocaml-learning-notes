@@ -159,7 +159,7 @@ let get_search_field v =
 ;;
 
 let get_search_term v =
-  let msg = "Enter search term: "
+  let msg = "Enter comma-delimited search terms: "
   and retry_msg = "Search term must be provided."
   and validate input = not (is_whitespace input) in
   match v with

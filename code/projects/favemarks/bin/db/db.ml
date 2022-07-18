@@ -39,14 +39,24 @@ let get_total_count () =
   | e -> Error (Exn.to_string e)
 ;;
 
+let get_like_clauses search_field search_term =
+  search_term
+  |> String.split ~on:','
+  |> List.fold ~init:"" ~f:(fun acc x ->
+         Printf.sprintf
+           "%s %s LIKE \'%%%s%%\'"
+           (if Common.is_whitespace acc then acc else acc ^ " OR ")
+           search_field
+           (String.strip x))
+;;
+
 let get_search_total_count ~search_field ~search_term =
   try
     let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
     let sql =
       sprintf
-        "SELECT COUNT(*) FROM bookmarks WHERE %s LIKE \'%%%s%%\'"
-        search_field
-        search_term
+        "SELECT COUNT(*) FROM bookmarks WHERE %s"
+        (get_like_clauses search_field search_term)
     in
     let stmt = prepare db sql in
     ignore (step stmt);
@@ -66,34 +76,29 @@ let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
       match search_field, search_term, sort_field, sort_order with
       | Some sf, Some st, Some stf, Some sto ->
         sprintf
-          "SELECT * FROM bookmarks WHERE %s LIKE \'%%%s%%\' ORDER BY %s %s LIMIT %d \
-           OFFSET %d"
-          sf
-          st
+          "SELECT * FROM bookmarks WHERE %s ORDER BY %s %s LIMIT %d OFFSET %d"
+          (get_like_clauses sf st)
           stf
           sto
           limit
           offset
       | Some sf, Some st, Some stf, _ ->
         sprintf
-          "SELECT * FROM bookmarks WHERE %s LIKE \'%%%s%%\' ORDER BY %s asc LIMIT %d \
-           OFFSET %d"
-          sf
-          st
+          "SELECT * FROM bookmarks WHERE %s ORDER BY %s asc LIMIT %d OFFSET %d"
+          (get_like_clauses sf st)
           stf
           limit
           offset
       | Some sf, Some st, _, _ ->
         sprintf
-          "SELECT * FROM bookmarks WHERE %s LIKE \'%%%s%%\' ORDER BY id desc LIMIT %d \
-           OFFSET %d"
-          sf
-          st
+          "SELECT * FROM bookmarks WHERE %s ORDER BY id desc LIMIT %d OFFSET %d"
+          (get_like_clauses sf st)
           limit
           offset
       | _ ->
         sprintf "SELECT * FROM bookmarks ORDER BY id DESC LIMIT %d OFFSET %d" limit offset
     in
+    printf "sql = %s \n%!" sql;
     let stmt = prepare db sql in
     let idx = ref 0 in
     while Poly.( = ) (step stmt) Rc.ROW do
