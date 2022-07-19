@@ -44,6 +44,24 @@ let ask_again_if_invalid ?validate ?retry_first ~msg ~retry_msg () =
   aux ()
 ;;
 
+let ask_again_or_default ?validate ~msg ~retry_msg default =
+  let rec aux () =
+    ask_input msg;
+    match In_channel.input_line In_channel.stdin with
+    | None | Some "" -> default
+    | Some x ->
+      (match validate with
+      | Some f ->
+        if f x
+        then x
+        else (
+          ask_retry retry_msg;
+          aux ())
+      | None -> x)
+  in
+  aux ()
+;;
+
 let is_whitespace s = s |> String.strip |> String.is_empty
 let epoch_str () = Time_unix.to_string Time_unix.epoch
 
@@ -57,10 +75,6 @@ let string_of_time (time : Time_unix.t) =
     Time_unix.format time "%d/%m/%y %H:%M:%S" ~zone:(Lazy.force Time_unix.Zone.local)
   with
   | _ -> epoch_str ()
-;;
-
-let strip_space str =
-  Str.split (Str.regexp "[ \n\r\x0c\t]+") str |> String.concat ~sep:" "
 ;;
 
 let ellipsis ~len str =
@@ -99,4 +113,17 @@ let open_link link =
       else "https://" ^ link
     in
     Caml_unix.execvp "open" [| "open"; "-a"; "Google Chrome"; link |])
+;;
+
+let strip_space_and_concat ~sep str =
+  str |> String.split ~on:',' |> List.map ~f:String.strip |> String.concat ~sep
+;;
+
+let validate_url str =
+  let re =
+    Re.Perl.re
+      {|((http|https)://)?(www.)?[a-zA-Z0-9@:%._\+~#?&//=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%._\+~#?&//=]*)|}
+    |> Re.compile
+  in
+  Re.execp re str
 ;;

@@ -15,3 +15,5 @@ val load
   -> ?sort_order:string
   -> unit
   -> (Common.bookmark Base.Queue.t, string) result
+
+val update : id:int -> url:string -> tags:string -> (string, string) result

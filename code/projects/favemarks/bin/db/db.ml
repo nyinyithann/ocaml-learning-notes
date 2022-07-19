@@ -27,6 +27,28 @@ let save ~url ~tags =
   | e -> Error (Exn.to_string e)
 ;;
 
+let update ~id ~url ~tags =
+  try
+    let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
+    let sql =
+      sprintf
+        "UPDATE bookmarks SET url = '%s', tags = '%s', date = '%s' WHERE id = %d"
+        url
+        tags
+        (Time.now () |> Time.to_string_utc)
+        id
+    in
+    let result : (string, string) result =
+      match exec db sql with
+      | Rc.OK -> Ok (sprintf "Successfully updated record with id %d\n" id)
+      | e -> Error (sprintf "%s.%s" (Rc.to_string e) (errmsg db))
+    in
+    result
+  with
+  | SqliteError s -> Error s
+  | e -> Error (Exn.to_string e)
+;;
+
 let get_total_count () =
   try
     let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in

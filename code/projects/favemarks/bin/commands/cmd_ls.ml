@@ -17,7 +17,7 @@ let show_headers () =
   T.set_cursor 1 1;
   T.print_string
     [ T.Bold; T.Foreground T.Green ]
-    "Favemarks: Your favourite bookmarks at your fingers.\n";
+    "Favemarks: Your favourite bookmarks at your fingertips.\n";
   draw_line ();
   T.print_string
     [ T.Bold; T.Foreground T.White; T.Background T.Blue ]
@@ -44,6 +44,16 @@ let show_page_info current_page total_pages total_count =
        current_page
        total_pages
        total_count)
+;;
+
+let get_id data =
+  let msg = "Enter id to update: "
+  and retry_msg = "id not found. Please try again."
+  and validate input =
+    Queue.exists data ~f:(fun x ->
+        String.equal (string_of_int x.Common.id) (String.strip input))
+  in
+  ask_again_if_invalid ~validate ~msg ~retry_msg ()
 ;;
 
 let rec list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count =
@@ -74,7 +84,9 @@ let rec list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order to
     prompt_msg
       := !prompt_msg
          ^ "\n\
-           \ To open a url in browser, press the letter in \'Open\' column.\n\
+           \ To open a url in the default browser, press the letter in \'Open\' column.\n\
+           \ To update a record, press u.\n\
+           \ To delete a record, press d.\n\
            \ To quit, press q.";
     prompt_msg := !prompt_msg ^ "\n Enter your choice: ";
     ask_input !prompt_msg;
@@ -100,6 +112,33 @@ let rec list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order to
       else (
         page := 0;
         list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
+    else if Char.equal c 'u'
+    then (
+      printf "\n%!";
+      let id = get_id data in
+      match Queue.find data ~f:(fun x -> String.equal (string_of_int x.Common.id) id) with
+      | Some { Common.url; tags; _ } ->
+        let ask_modified_url () =
+          T.print_string
+            [ T.Foreground T.Magenta ]
+            (sprintf " 🟠  Existing url: %s \n%!" url);
+          let msg = "Enter modified url or nothing to skip: "
+          and retry_msg = "A valid url must be provided." in
+          ask_again_or_default ~validate:validate_url ~msg ~retry_msg url
+        and ask_modified_tags () =
+          T.print_string
+            [ T.Foreground T.Magenta ]
+            (sprintf " 🟠  Existing tags: %s \n%!" tags);
+          let msg = "Enter modified tags or nothing to skip: "
+          and retry_msg = "One or more tags must be provided." in
+          ask_again_or_default ~msg ~retry_msg tags
+        in
+        let modified_url = ask_modified_url () in
+        let modified_tags = ask_modified_tags () in
+        (match Db.update ~id:(int_of_string id) ~url:modified_url ~tags:modified_tags with
+        | Result.Ok s -> print_ok_msg s
+        | Result.Error e -> print_error_msg e)
+      | _ -> ())
     else if Char.equal c 'q'
     then (
       printf "\n%!";
@@ -111,7 +150,16 @@ let rec list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order to
       with
       | Some r ->
         printf "\n%!";
-        Common.open_link r.url
+        (match Caml_unix.fork () with
+        | 0 -> Common.open_link r.url
+        | _ ->
+          decr page;
+          list_bookmark_page
+            ?search_field
+            ?search_term
+            ?sort_field
+            ?sort_order
+            total_count)
       | _ ->
         decr page;
         list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
@@ -145,10 +193,11 @@ let list_bookmark (params : (string * string * string option * string option) op
 ;;
 
 let get_search_field v =
-  let msg = "Enter search field (url or tags): "
-  and retry_msg = {|Search field should be either one of 'url' or 'tags': |}
+  let msg = "Enter search field (id or url or tags): "
+  and retry_msg = {|Search field should be either one of  'id' or 'url' or 'tags': |}
   and validate input =
-    [ "url"; "tags" ] |> List.exists ~f:(fun x -> String.equal x (String.strip input))
+    [ "id"; "url"; "tags" ]
+    |> List.exists ~f:(fun x -> String.equal x (String.strip input))
   in
   match v with
   | None -> ask_again_if_invalid ~validate ~msg ~retry_msg ()

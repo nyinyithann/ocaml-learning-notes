@@ -1,27 +1,28 @@
 open Core
 open Common
 
-let validate input = not (is_whitespace input)
-
-let get_value ~v ~msg ~retry_msg =
+let get_url v =
+  let msg = "Enter a url: "
+  and retry_msg = "A valid url must be provided." in
   match v with
+  | None -> ask_again_if_invalid ~validate:validate_url ~msg ~retry_msg ()
+  | Some x ->
+    if validate_url x
+    then x
+    else ask_again_if_invalid ~validate:validate_url ~retry_first:() ~msg ~retry_msg ()
+;;
+
+let get_tags v =
+  let msg = "Enter comma-delimited tags : "
+  and retry_msg = "One or more tags must be provided."
+  and validate input = not (is_whitespace input) in
+  (match v with
   | None -> ask_again_if_invalid ~validate ~msg ~retry_msg ()
   | Some x ->
     if validate x
     then x
-    else ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ()
-;;
-
-let get_url v =
-  let msg = "Enter a url: "
-  and retry_msg = "A URL must be provided." in
-  get_value ~v ~msg ~retry_msg
-;;
-
-let get_tags v =
-  let msg = "Enter space-delimited tags : "
-  and retry_msg = "One or more tags must be provided." in
-  get_value ~v ~msg ~retry_msg |> strip_space
+    else ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ())
+  |> strip_space_and_concat ~sep:","
 ;;
 
 let save_bookmark ~url ~tags =

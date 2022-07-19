@@ -19,10 +19,18 @@ val ask_again_if_invalid
   -> unit
   -> string
 
+val ask_again_or_default
+  :  ?validate:(string -> bool)
+  -> msg:string
+  -> retry_msg:string
+  -> string
+  -> string
+
 val is_whitespace : string -> bool
 val time_of_string : string -> Time_unix.t
 val string_of_time : Time_unix.t -> string
-val strip_space : string -> string
+val strip_space_and_concat : sep:string -> string -> string
 val ellipsis : len:int -> string -> string
 val get_one_char : unit -> char
 val open_link : string -> unit
+val validate_url : string -> bool

@@ -2,7 +2,7 @@
  (name main)
  (public_name fm)
  (package fm)
- (libraries core_compat sqlite3 ANSITerminal Str unix)
+ (libraries core_compat sqlite3 ANSITerminal re unix)
  (preprocess (pps ppx_jane)))
 
 (include_subdirs unqualified)
