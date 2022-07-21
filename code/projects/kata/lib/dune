@@ -1,0 +1,9 @@
+(library
+ (public_name kata)
+ (name kata)
+ (preprocess (pps ppx_inline_test ppx_expect) )
+ (inline_tests)
+ (synopsis "Coding practice"))
+
+(env
+ (release (inline_tests enabled)))
