@@ -16,7 +16,7 @@ let save ~url ~tags =
         tags
         (Time.now () |> Time.to_string_utc)
     in
-    let result : (string, string) result =
+    let result =
       match exec db sql with
       | Rc.OK -> Ok (sprintf "Successfully saved with id %Ld\n" (last_insert_rowid db))
       | e -> Error (sprintf "%s.%s" (Rc.to_string e) (errmsg db))
@@ -38,7 +38,7 @@ let update ~id ~url ~tags =
         (Time.now () |> Time.to_string_utc)
         id
     in
-    let result : (string, string) result =
+    let result =
       match exec db sql with
       | Rc.OK -> Ok (sprintf "Successfully updated record with id %d\n" id)
       | e -> Error (sprintf "%s.%s" (Rc.to_string e) (errmsg db))
@@ -54,7 +54,7 @@ let get_total_count () =
     let& db = db_open ~mode:`NO_CREATE ~uri:true db_uri in
     let sql = sprintf "SELECT COUNT(*) FROM bookmarks" in
     let stmt = prepare db sql in
-    ignore (step stmt);
+    ignore @@ step stmt;
     Ok (column_int stmt 0)
   with
   | SqliteError s -> Error s
@@ -65,11 +65,11 @@ let get_like_clauses search_field search_term =
   search_term
   |> String.split ~on:','
   |> List.fold ~init:"" ~f:(fun acc x ->
-         Printf.sprintf
-           "%s %s LIKE \'%%%s%%\'"
-           (if Common.is_whitespace acc then acc else acc ^ " OR ")
-           search_field
-           (String.strip x))
+       Printf.sprintf
+         "%s %s LIKE \'%%%s%%\'"
+         (if Common.is_whitespace acc then acc else acc ^ " OR ")
+         search_field
+         (String.strip x))
 ;;
 
 let get_search_total_count ~search_field ~search_term =
@@ -81,14 +81,14 @@ let get_search_total_count ~search_field ~search_term =
         (get_like_clauses search_field search_term)
     in
     let stmt = prepare db sql in
-    ignore (step stmt);
+    ignore @@ step stmt;
     Ok (column_int stmt 0)
   with
   | SqliteError s -> Error s
   | e -> Error (Exn.to_string e)
 ;;
 
-let mnemonics = [| "a"; "b"; "c"; "e"; "f"; "g"; "n"; "s"; "m"; "y"; "w"; "e" |]
+let mnemonics = [| "a"; "s"; "d"; "f"; "b"; "c"; "e"; "w"; "r"; "i"; "x"; "y" |]
 
 let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
   try
@@ -120,7 +120,6 @@ let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
       | _ ->
         sprintf "SELECT * FROM bookmarks ORDER BY id DESC LIMIT %d OFFSET %d" limit offset
     in
-    printf "sql = %s \n%!" sql;
     let stmt = prepare db sql in
     let idx = ref 0 in
     while Poly.( = ) (step stmt) Rc.ROW do

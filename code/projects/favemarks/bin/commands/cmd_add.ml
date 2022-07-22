@@ -13,15 +13,16 @@ let get_url v =
 ;;
 
 let get_tags v =
-  let msg = "Enter comma-delimited tags : "
-  and retry_msg = "One or more tags must be provided."
-  and validate input = not (is_whitespace input) in
+  let msg = "Enter comma-delimited tags: "
+  and retry_msg =
+    "One or more comma-delimited tags must be provided. Tags should not have space."
+  in
   (match v with
-  | None -> ask_again_if_invalid ~validate ~msg ~retry_msg ()
-  | Some x ->
-    if validate x
-    then x
-    else ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ())
+   | None -> ask_again_if_invalid ~validate:validate_tags ~msg ~retry_msg ()
+   | Some x ->
+     if validate_tags x
+     then x
+     else ask_again_if_invalid ~validate:validate_tags ~retry_first:() ~msg ~retry_msg ())
   |> strip_space_and_concat ~sep:","
 ;;
 

@@ -30,7 +30,10 @@ val is_whitespace : string -> bool
 val time_of_string : string -> Time_unix.t
 val string_of_time : Time_unix.t -> string
 val strip_space_and_concat : sep:string -> string -> string
-val ellipsis : len:int -> string -> string
 val get_one_char : unit -> char
 val open_link : string -> unit
 val validate_url : string -> bool
+val validate_tags : string -> bool
+val new_line : unit -> unit
+val print_lines : string list -> unit
+val print_noti : string -> unit

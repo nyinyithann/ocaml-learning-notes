@@ -4,36 +4,38 @@ module T = ANSITerminal
 
 let limit = 12
 
-let draw_line () =
-  T.print_string
-    [ T.Foreground T.Blue ]
-    (Printf.sprintf
-       "%-161s\n%!"
-       (List.init 161 ~f:(fun _ -> "_") |> String.concat ~sep:""))
+let columns =
+  let open Ascii_table_kernel in
+  [ Column.create
+      ~align:Align.Left
+      ~min_width:6
+      ~max_width:6
+      "Open"
+      (fun (x : Common.bookmark) -> x.mnemonic)
+  ; Column.create
+      ~align:Align.Left
+      ~min_width:8
+      ~max_width:8
+      "Id"
+      (fun (x : Common.bookmark) -> string_of_int x.id)
+  ; Column.create ~align:Align.Left ~min_width:35 "Url" (fun (x : Common.bookmark) ->
+      x.url)
+  ; Column.create ~align:Align.Left ~min_width:35 "Tags" (fun (x : Common.bookmark) ->
+      x.tags)
+  ; Column.create ~align:Align.Left ~min_width:20 "Date" (fun (x : Common.bookmark) ->
+      string_of_time x.date)
+  ]
 ;;
 
-let show_headers () =
+let show_empty () = print_error_msg "No bookmarks to display."
+
+let show_title () =
   T.erase T.Screen;
-  T.set_cursor 1 1;
+  T.set_cursor 0 0;
   T.print_string
-    [ T.Bold; T.Foreground T.Green ]
-    "Favemarks: Your favourite bookmarks at your fingertips.\n";
-  draw_line ();
-  T.print_string
-    [ T.Bold; T.Foreground T.White; T.Background T.Blue ]
-    (Printf.sprintf
-       "| %-4s| %-7s| %-60s| %-60s| %-19s|\n%!"
-       "Open"
-       "Id"
-       "Url"
-       "Tags"
-       "Date");
-  draw_line ()
-;;
-
-let show_empty () =
-  show_headers ();
-  T.print_string [ T.Foreground T.Red ] (Printf.sprintf "No bookmarks to display.\n%!")
+    [ T.Foreground T.Green; T.Bold ]
+    (sprintf "\n☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.");
+  new_line ()
 ;;
 
 let show_page_info current_page total_pages total_count =
@@ -41,7 +43,7 @@ let show_page_info current_page total_pages total_count =
     [ T.Foreground T.Green ]
     (Printf.sprintf
        "[Page %d/%d] [Total bookmarks: %d]\n\n%!"
-       current_page
+       (if current_page < total_pages then current_page + 1 else current_page)
        total_pages
        total_count)
 ;;
@@ -51,67 +53,64 @@ let get_id data =
   and retry_msg = "id not found. Please try again."
   and validate input =
     Queue.exists data ~f:(fun x ->
-        String.equal (string_of_int x.Common.id) (String.strip input))
+      String.equal (string_of_int x.Common.id) (String.strip input))
   in
   ask_again_if_invalid ~validate ~msg ~retry_msg ()
 ;;
 
-let rec list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count =
-  let page = ref 0 in
-  let offset = !page * limit in
+let rec list_bookmark_page
+  ?search_field
+  ?search_term
+  ?sort_field
+  ?sort_order
+  ~page
+  ~total_count
+  ()
+  =
+  let offset = page * limit in
   match Db.load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () with
   | Ok data ->
-    incr page;
-    show_headers ();
-    Queue.iter data ~f:(fun { Common.mnemonic; id; url; tags; date; _ } ->
-        printf
-          "| %-4s| %-7d| %-60s| %-60s| %-19s|\n"
-          mnemonic
-          id
-          (ellipsis ~len:60 url)
-          (ellipsis ~len:60 tags)
-          (Common.string_of_time date);
-        draw_line ());
-
+    show_title ();
+    Ascii_table.output ~oc:stdout ~limit_width_to:140 ~bars:`Unicode columns
+    @@ Queue.to_list data;
     let total_pages =
       Float.(round_up (float_of_int total_count / float_of_int limit)) |> Float.to_int
     in
-    show_page_info !page total_pages total_count;
-    let prompt_msg = ref "" in
-    if !page < total_pages then prompt_msg := "\n To go to next page, press j.";
-    if !page > 1 && !page < total_pages
-    then prompt_msg := !prompt_msg ^ "\n To go to the previous page, press k.";
-    prompt_msg
-      := !prompt_msg
-         ^ "\n\
-           \ To open a url in the default browser, press the letter in \'Open\' column.\n\
-           \ To update a record, press u.\n\
-           \ To delete a record, press d.\n\
-           \ To quit, press q.";
-    prompt_msg := !prompt_msg ^ "\n Enter your choice: ";
-    ask_input !prompt_msg;
+    show_page_info page total_pages total_count;
+    let prompt_msg = Queue.create () in
+    let add_prompt_msg = Queue.enqueue prompt_msg in
+    if page < total_pages - 1 then add_prompt_msg "To go to next page, press j.";
+    if page > 0 && page < total_pages
+    then add_prompt_msg "To go to the previous page, press k.";
+    add_prompt_msg
+      "To open a url in the default browser, press the letter in \'Open\' column.";
+    add_prompt_msg "To update a record, press u.";
+    add_prompt_msg "To delete a record, press d.";
+    add_prompt_msg "To quit, press q.";
+    print_lines @@ Queue.to_list prompt_msg;
+    new_line ();
+    ask_input "Enter your choice: ";
     let c = Char.lowercase (Common.get_one_char ()) in
-    if Char.equal c 'j'
+    if Char.equal c 'j' && page < total_pages - 1
     then
-      if !page <> total_pages
-      then
-        list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count
-      else (
-        decr page;
-        list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
-    else if Char.equal c 'k'
+      list_bookmark_page
+        ?search_field
+        ?search_term
+        ?sort_field
+        ?sort_order
+        ~page:(page + 1)
+        ~total_count
+        ()
+    else if Char.equal c 'k' && page > 0
     then
-      if !page > 1
-      then (
-        page := !page - 2;
-        list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
-      else if !page > 0
-      then (
-        decr page;
-        list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
-      else (
-        page := 0;
-        list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
+      list_bookmark_page
+        ?search_field
+        ?search_term
+        ?sort_field
+        ?sort_order
+        ~page:(page - 1)
+        ~total_count
+        ()
     else if Char.equal c 'u'
     then (
       printf "\n%!";
@@ -119,70 +118,95 @@ let rec list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order to
       match Queue.find data ~f:(fun x -> String.equal (string_of_int x.Common.id) id) with
       | Some { Common.url; tags; _ } ->
         let ask_modified_url () =
-          T.print_string
-            [ T.Foreground T.Magenta ]
-            (sprintf " 🟠  Existing url: %s \n%!" url);
+          print_noti (sprintf "Existing url: %s" url);
           let msg = "Enter modified url or nothing to skip: "
           and retry_msg = "A valid url must be provided." in
           ask_again_or_default ~validate:validate_url ~msg ~retry_msg url
         and ask_modified_tags () =
-          T.print_string
-            [ T.Foreground T.Magenta ]
-            (sprintf " 🟠  Existing tags: %s \n%!" tags);
+          print_noti (sprintf "Existing tags: %s" tags);
           let msg = "Enter modified tags or nothing to skip: "
-          and retry_msg = "One or more tags must be provided." in
-          ask_again_or_default ~msg ~retry_msg tags
+          and retry_msg =
+            "One or more comma-delimited tags must be provided. Tags should not have \
+             space."
+          in
+          ask_again_or_default ~validate:validate_tags ~msg ~retry_msg tags
         in
         let modified_url = ask_modified_url () in
         let modified_tags = ask_modified_tags () in
-        (match Db.update ~id:(int_of_string id) ~url:modified_url ~tags:modified_tags with
-        | Result.Ok s -> print_ok_msg s
-        | Result.Error e -> print_error_msg e)
+        if String.(modified_url <> url || modified_tags <> tags)
+        then (
+          match
+            Db.update ~id:(int_of_string id) ~url:modified_url ~tags:modified_tags
+          with
+          | Result.Ok s -> print_ok_msg s
+          | Result.Error e -> print_error_msg e);
+        list_bookmark_page
+          ?search_field
+          ?search_term
+          ?sort_field
+          ?sort_order
+          ~page
+          ~total_count
+          ()
       | _ -> ())
     else if Char.equal c 'q'
-    then (
-      printf "\n%!";
-      ())
+    then printf "\n%!"
     else (
+      (* open bookmarks in the default browser *)
       match
         Queue.find data ~f:(fun { mnemonic; _ } ->
-            String.equal (String.lowercase mnemonic) (String.lowercase (Char.to_string c)))
+          String.equal (String.lowercase mnemonic) (String.lowercase (Char.to_string c)))
       with
       | Some r ->
-        printf "\n%!";
+        printf "%!";
         (match Caml_unix.fork () with
-        | 0 -> Common.open_link r.url
-        | _ ->
-          decr page;
-          list_bookmark_page
-            ?search_field
-            ?search_term
-            ?sort_field
-            ?sort_order
-            total_count)
+         | 0 -> Common.open_link r.url
+         | _ ->
+           list_bookmark_page
+             ?search_field
+             ?search_term
+             ?sort_field
+             ?sort_order
+             ~page
+             ~total_count
+             ())
       | _ ->
-        decr page;
-        list_bookmark_page ?search_field ?search_term ?sort_field ?sort_order total_count)
+        list_bookmark_page
+          ?search_field
+          ?search_term
+          ?sort_field
+          ?sort_order
+          ~page
+          ~total_count
+          ())
   | Error e -> print_error_msg e
 ;;
 
 let list_bookmarks () =
   match Db.get_total_count () with
-  | Ok c -> if c = 0 then show_empty () else list_bookmark_page c
+  | Ok c -> if c = 0 then show_empty () else list_bookmark_page ~page:0 ~total_count:c ()
   | Error e -> print_error_msg e
 ;;
 
 let search_bookmarks
-    search_field
-    search_term
-    (sort_field : string option)
-    (sort_order : string option)
+  search_field
+  search_term
+  (sort_field : string option)
+  (sort_order : string option)
   =
   match Db.get_search_total_count ~search_field ~search_term with
   | Ok c ->
     if c = 0
     then show_empty ()
-    else list_bookmark_page ~search_field ~search_term ?sort_field ?sort_order c
+    else
+      list_bookmark_page
+        ~search_field
+        ~search_term
+        ?sort_field
+        ?sort_order
+        ~page:0
+        ~total_count:c
+        ()
   | Error e -> print_error_msg e
 ;;
 
@@ -287,9 +311,9 @@ let command =
      in
      let params =
        if not
-            (List.exists
+          @@ List.exists
                ~f:Option.is_some
-               [ search_field; search_term; sort_field; sort_order ])
+               [ search_field; search_term; sort_field; sort_order ]
        then None
        else get_params ~search_field ~search_term ~sort_field ~sort_order
      in
