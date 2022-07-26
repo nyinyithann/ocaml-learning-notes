@@ -1,5 +1,7 @@
 open Core
 open Common
+open UI_display
+open UI_prompt
 module T = ANSITerminal
 
 let limit = 12
@@ -11,30 +13,28 @@ let columns =
       ~min_width:6
       ~max_width:6
       "Open"
-      (fun (x : Common.bookmark) -> x.mnemonic)
+      (fun (x : Model.bookmark) -> x.mnemonic)
   ; Column.create
       ~align:Align.Left
       ~min_width:8
       ~max_width:8
       "Id"
-      (fun (x : Common.bookmark) -> string_of_int x.id)
-  ; Column.create ~align:Align.Left ~min_width:35 "Url" (fun (x : Common.bookmark) ->
+      (fun (x : Model.bookmark) -> string_of_int x.id)
+  ; Column.create ~align:Align.Left ~min_width:35 "Url" (fun (x : Model.bookmark) ->
       x.url)
-  ; Column.create ~align:Align.Left ~min_width:35 "Tags" (fun (x : Common.bookmark) ->
+  ; Column.create ~align:Align.Left ~min_width:35 "Tags" (fun (x : Model.bookmark) ->
       x.tags)
-  ; Column.create ~align:Align.Left ~min_width:20 "Date" (fun (x : Common.bookmark) ->
+  ; Column.create ~align:Align.Left ~min_width:20 "Date" (fun (x : Model.bookmark) ->
       string_of_time x.date)
   ]
 ;;
-
-let show_empty () = print_error_msg "No bookmarks to display."
 
 let show_title () =
   T.erase T.Screen;
   T.set_cursor 0 0;
   T.print_string
     [ T.Foreground T.Green; T.Bold ]
-    (sprintf "\n☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.");
+    (sprintf "\n ☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.");
   new_line ()
 ;;
 
@@ -42,7 +42,7 @@ let show_page_info current_page total_pages total_count =
   T.print_string
     [ T.Foreground T.Green ]
     (Printf.sprintf
-       "[Page %d/%d] [Total bookmarks: %d]\n\n%!"
+       " [Page %d/%d] [Total bookmarks: %d]\n\n%!"
        (if current_page < total_pages then current_page + 1 else current_page)
        total_pages
        total_count)
@@ -53,7 +53,7 @@ let get_id data =
   and retry_msg = "id not found. Please try again."
   and validate input =
     Queue.exists data ~f:(fun x ->
-      String.equal (string_of_int x.Common.id) (String.strip input))
+      String.equal (string_of_int x.Model.id) (String.strip input))
   in
   ask_again_if_invalid ~validate ~msg ~retry_msg ()
 ;;
@@ -90,7 +90,7 @@ let rec list_bookmark_page
     print_lines @@ Queue.to_list prompt_msg;
     new_line ();
     ask_input "Enter your choice: ";
-    let c = Char.lowercase (Common.get_one_char ()) in
+    let c = Char.lowercase (get_one_char ()) in
     if Char.equal c 'j' && page < total_pages - 1
     then
       list_bookmark_page
@@ -115,8 +115,8 @@ let rec list_bookmark_page
     then (
       printf "\n%!";
       let id = get_id data in
-      match Queue.find data ~f:(fun x -> String.equal (string_of_int x.Common.id) id) with
-      | Some { Common.url; tags; _ } ->
+      match Queue.find data ~f:(fun x -> String.equal (string_of_int x.Model.id) id) with
+      | Some { Model.url; tags; _ } ->
         let ask_modified_url () =
           print_noti (sprintf "Existing url: %s" url);
           let msg = "Enter modified url or nothing to skip: "
@@ -283,7 +283,7 @@ let get_params ~search_field ~search_term ~sort_field ~sort_order =
 
 let command =
   Command.basic
-    ~summary:"List or search bookmarks."
+    ~summary:"Search bookmarks."
     (let%map_open.Command search_field =
        flag
          ~full_flag_required:()

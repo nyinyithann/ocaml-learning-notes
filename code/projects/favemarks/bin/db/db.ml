@@ -65,11 +65,16 @@ let get_like_clauses search_field search_term =
   search_term
   |> String.split ~on:','
   |> List.fold ~init:"" ~f:(fun acc x ->
-       Printf.sprintf
-         "%s %s LIKE \'%%%s%%\'"
-         (if Common.is_whitespace acc then acc else acc ^ " OR ")
-         search_field
-         (String.strip x))
+       let sx = String.strip x in
+       Printf.sprintf "%s %s" (if Common.is_whitespace acc then acc else acc ^ " OR ")
+       @@ search_field
+       |> String.split ~on:','
+       |> List.fold ~init:"" ~f:(fun acc y ->
+            Printf.sprintf
+              "%s %s LIKE \'%%%s%%\' "
+              (if Common.is_whitespace acc then acc else acc ^ " OR ")
+              (String.strip y)
+              sx))
 ;;
 
 let get_search_total_count ~search_field ~search_term =
@@ -88,7 +93,7 @@ let get_search_total_count ~search_field ~search_term =
   | e -> Error (Exn.to_string e)
 ;;
 
-let mnemonics = [| "a"; "s"; "d"; "f"; "b"; "c"; "e"; "w"; "r"; "i"; "x"; "y" |]
+let mnemonics = [| "a"; "s"; "g"; "f"; "b"; "c"; "e"; "w"; "r"; "i"; "x"; "y" |]
 
 let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
   try
@@ -129,7 +134,7 @@ let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
       and date = column_text stmt 3 in
       Queue.enqueue
         data_queue
-        { Common.id
+        { Model.id
         ; mnemonic = mnemonics.(!idx)
         ; url
         ; tags

@@ -6,3 +6,6 @@
  (preprocess (pps ppx_jane)))
 
 (include_subdirs unqualified)
+(env
+  (dev
+    (flags (:standard -w -27))))
