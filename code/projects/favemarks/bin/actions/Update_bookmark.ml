@@ -3,9 +3,8 @@ open Common
 open UI_display
 open UI_prompt
 
-let get_id data =
-  let msg = "Enter id to update: "
-  and retry_msg = "id not found. Please try again."
+let get_id ~msg data =
+  let retry_msg = "id not found in the loaded records. Please try again."
   and validate input =
     Queue.exists data ~f:(fun x ->
       String.equal (string_of_int x.Model.id) (String.strip input))
@@ -40,7 +39,7 @@ let update
   data
   =
   new_line ();
-  let id = get_id data in
+  let id = get_id ~msg:"Enter id to update: " data in
   match Queue.find data ~f:(fun x -> String.equal (string_of_int x.Model.id) id) with
   | Some { Model.url; tags; _ } ->
     let modified_url = get_modified_url url in
@@ -58,5 +57,5 @@ let update
       ~current_page
       ~total_count
       ()
-  | _ -> ()
+  | _ -> print_error_msg "Record with id %d is not found in the currently loaded data."
 ;;

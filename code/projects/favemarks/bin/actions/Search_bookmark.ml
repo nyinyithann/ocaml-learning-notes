@@ -4,7 +4,7 @@ open UI_display
 open UI_prompt
 open UI_menu
 
-let page_size = 12
+let page_size = FMConfig.get_page_size ()
 
 let rec search_aux
   ?search_field

@@ -17,3 +17,4 @@ val load
   -> (Model.bookmark Base.Queue.t, string) result
 
 val update : id:int -> url:string -> tags:string -> (string, string) result
+val delete : id:int -> (string, string) result

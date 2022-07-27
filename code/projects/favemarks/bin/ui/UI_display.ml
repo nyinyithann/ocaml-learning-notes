@@ -21,8 +21,8 @@ let print_noti msg =
 let print_lines l = l |> List.iter ~f:(printf " 🔵 %s\n%!")
 
 let show_title () =
-  (* T.erase T.Screen; *)
-  (* T.set_cursor 0 0; *)
+  T.erase T.Screen;
+  T.set_cursor 0 0;
   T.print_string
     [ T.Foreground T.Green; T.Bold ]
     (sprintf "\n ☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.");

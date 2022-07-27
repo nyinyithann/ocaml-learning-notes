@@ -53,3 +53,9 @@ let validate_tags tags =
 let validate_fields fields input =
   fields |> List.exists ~f:(fun x -> String.(x = lowercase @@ strip input))
 ;;
+
+let tuple_of_first_two l =
+  match l with
+  | f :: s :: _ -> Some (f, s)
+  | _ -> None
+;;

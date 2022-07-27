@@ -58,6 +58,8 @@ let show_menu
       ~total_count
       ~search
       data
+  else if Char.equal c 'd'
+  then Delete_bookmark.delete data
   else if Char.equal c 'q'
   then new_line ()
   else (
