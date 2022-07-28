@@ -6,12 +6,13 @@ open Common
 let get_url v =
   let msg = "Enter a url: "
   and retry_msg = "A valid url must be provided." in
-  match v with
-  | None -> ask_again_if_invalid ~validate:validate_url ~msg ~retry_msg ()
-  | Some x ->
-    if validate_url x
-    then String.strip x
-    else ask_again_if_invalid ~validate:validate_url ~retry_first:() ~msg ~retry_msg ()
+  (match v with
+   | None -> ask_again_if_invalid ~validate:validate_url ~msg ~retry_msg ()
+   | Some x ->
+     if validate_url x
+     then x
+     else ask_again_if_invalid ~validate:validate_url ~retry_first:() ~msg ~retry_msg ())
+  |> String.strip
 ;;
 
 let get_tags v =
@@ -28,7 +29,7 @@ let get_tags v =
   |> strip_space_and_concat ~sep:","
 ;;
 
-let save ~url ~tags =
+let add ~url ~tags =
   let url = get_url url
   and tags = get_tags tags in
   match Db.save ~url ~tags with

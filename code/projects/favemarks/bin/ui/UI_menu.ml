@@ -18,8 +18,7 @@ let show_menu
   if current_page < total_pages - 1 then add_prompt_msg "To go to next page, press j.";
   if current_page > 0 && current_page < total_pages
   then add_prompt_msg "To go to the previous page, press k.";
-  add_prompt_msg
-    "To open a url in the default browser, press the letter in \'Open\' column.";
+  add_prompt_msg "To open a url in the default browser, press the letter in Open column.";
   add_prompt_msg "To update a record, press u.";
   add_prompt_msg "To delete a record, press d.";
   add_prompt_msg "To quit, press q.";

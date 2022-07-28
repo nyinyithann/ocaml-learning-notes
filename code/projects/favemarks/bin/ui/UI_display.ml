@@ -8,7 +8,7 @@ let print_ok_msg msg =
 ;;
 
 let print_error_msg msg =
-  T.print_string [ T.Foreground T.Red ] (sprintf "\n 🌶  %s\n\n%!" msg)
+  T.prerr_string [ T.Foreground T.Red ] (sprintf "\n 🌶  %s\n\n%!" msg)
 ;;
 
 let show_empty () = print_error_msg "No bookmarks to display."

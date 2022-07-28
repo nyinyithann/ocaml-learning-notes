@@ -4,7 +4,6 @@ open UI_menu
 open UI_prompt
 open Common
 
-let page_size = FMConfig.get_page_size ()
 let current_page = 0
 
 let get_sort_field v =
@@ -12,24 +11,26 @@ let get_sort_field v =
   and retry_msg =
     {|Sort field should be either one of 'id' or 'url' or 'tags' or 'date': |}
   and validate input = validate_fields [ "id"; "url"; "tags"; "date" ] input in
-  match v with
-  | None | Some "" -> None
-  | Some x ->
-    if validate x
-    then Some (String.strip x)
-    else Some (String.strip @@ ask_again_if_invalid ~validate ~msg ~retry_msg ())
+  (match v with
+   | None | Some "" -> None
+   | Some x ->
+     if validate x
+     then Some x
+     else Some (ask_again_if_invalid ~validate ~msg ~retry_msg ()))
+  |> Option.map ~f:String.strip
 ;;
 
 let get_sort_order v =
   let msg = "Enter sort order (asc or desc): "
   and retry_msg = {|Sort order should be either one of 'asc' or 'desc": |}
   and validate input = validate_fields [ "asc"; "desc" ] input in
-  match v with
-  | None | Some "" -> None
-  | Some x ->
-    if validate x
-    then Some x
-    else Some (String.strip @@ ask_again_if_invalid ~validate ~msg ~retry_msg ())
+  (match v with
+   | None | Some "" -> None
+   | Some x ->
+     if validate x
+     then Some x
+     else Some (ask_again_if_invalid ~validate ~msg ~retry_msg ()))
+  |> Option.map ~f:String.strip
 ;;
 
 let ls ?sort_field ?sort_order () =
@@ -40,6 +41,7 @@ let ls ?sort_field ?sort_order () =
     if total_count = 0
     then show_empty ()
     else (
+      let page_size = FMConfig.get_page_size () in
       let offset = current_page * page_size in
       match Db.load ~limit:page_size ~offset ?sort_field ?sort_order () with
       | Ok data ->

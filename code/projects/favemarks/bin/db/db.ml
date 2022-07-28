@@ -3,7 +3,8 @@ open Sqlite3
 open Core.Result
 
 let get_db_path_check_msg () =
-  sprintf "Please check db path value at \'%s\' file" @@ FMConfig.get_config_path_full ()
+  sprintf "Please check db path value at \'%s\' file"
+  @@ Lazy.force FMConfig.get_config_path_full
 ;;
 
 let get_total_count () =
@@ -26,11 +27,11 @@ let get_like_clauses search_field search_term =
   |> String.split ~on:','
   |> List.fold ~init:"" ~f:(fun acc x ->
        let sx = String.strip x in
-       Printf.sprintf "%s %s" (if Common.is_whitespace acc then acc else acc ^ " OR ")
+       sprintf "%s %s" (if Common.is_whitespace acc then acc else acc ^ " OR ")
        @@ search_field
        |> String.split ~on:','
        |> List.fold ~init:"" ~f:(fun acc y ->
-            Printf.sprintf
+            sprintf
               "%s %s LIKE \'%%%s%%\' "
               (if Common.is_whitespace acc then acc else acc ^ " OR ")
               (String.strip y)
@@ -187,7 +188,7 @@ let load ~limit ~offset ?search_field ?search_term ?sort_field ?sort_order () =
        let stmt = prepare db sql in
        let idx = ref 0 in
        let mnemonics = generate_mnemonics () in
-       while Poly.( = ) (step stmt) Rc.ROW do
+       while Poly.(step stmt = Rc.ROW) do
          let id = column_int stmt 0
          and url = column_text stmt 1
          and tags = column_text stmt 2

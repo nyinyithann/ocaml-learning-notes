@@ -54,8 +54,75 @@ let validate_fields fields input =
   fields |> List.exists ~f:(fun x -> String.(x = lowercase @@ strip input))
 ;;
 
-let tuple_of_first_two l =
-  match l with
+let tuple_of_first_two = function
   | f :: s :: _ -> Some (f, s)
   | _ -> None
 ;;
+
+let get_os_type () =
+  if String.(Sys.os_type = "Unix")
+  then (
+    try
+      let ic = Caml_unix.open_process_in "uname -s" in
+      let r = In_channel.input_line ic in
+      In_channel.close ic;
+      match r with
+      | Some name when String.(name = "Darwin") -> Ok `MacOS
+      | _ -> Ok `Linux
+    with
+    | e -> Error (Exn.to_string e))
+  else Error "The OS is not supported."
+;;
+
+module Browser = struct
+  let chrome_key = "Chrome"
+  let safari_key = "Safari"
+  let edge_key = "Edge"
+  let firefox_key = "Firefox"
+  let brave_key = "Brave"
+
+  let mac_browsers =
+    [ chrome_key, "Google Chrome"
+    ; safari_key, "Safari"
+    ; edge_key, "Microsoft Edge"
+    ; firefox_key, "Firefox"
+    ; brave_key, "Brave Browser"
+    ]
+  ;;
+
+  let mac_browser_keys =
+    sprintf "%s, %s, %s, %s, %s" chrome_key safari_key edge_key firefox_key brave_key
+  ;;
+
+  let mac_browser_key_list =
+    String.
+      [ lowercase chrome_key
+      ; lowercase safari_key
+      ; lowercase edge_key
+      ; lowercase firefox_key
+      ; lowercase brave_key
+      ]
+  ;;
+
+  let get_browser_keys () =
+    match get_os_type () with
+    | Ok `MacOS -> mac_browser_keys
+    | Ok `Linux -> mac_browser_keys (* todo: to implement for Linux *)
+    | _ -> ""
+  ;;
+
+  let get_browser_key_list () =
+    match get_os_type () with
+    | Ok `MacOS -> mac_browser_key_list
+    | Ok `Linux -> mac_browser_key_list (* todo: to implement for Linux *)
+    | _ -> []
+  ;;
+
+  let get_browser_name key =
+    match
+      mac_browsers |> List.find ~f:(fun (k, v) -> String.(lowercase key = lowercase k))
+    with
+    | Some (_, n) -> Ok n
+    | None -> Error (sprintf "%s browser not found" key)
+  ;;
+end

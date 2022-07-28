@@ -4,8 +4,6 @@ open UI_display
 open UI_prompt
 open UI_menu
 
-let page_size = FMConfig.get_page_size ()
-
 let rec search_aux
   ?search_field
   ?search_term
@@ -15,6 +13,7 @@ let rec search_aux
   ~total_count
   ()
   =
+  let page_size = FMConfig.get_page_size () in
   let offset = current_page * page_size in
   match
     Db.load ~limit:page_size ~offset ?search_field ?search_term ?sort_field ?sort_order ()
@@ -70,28 +69,26 @@ let get_sort_field v =
   and retry_msg =
     {|Sort field should be either one of 'id' or 'url' or 'tags' or 'date': |}
   and validate input = validate_fields [ "id"; "url"; "tags"; "date" ] input in
-  match v with
-  | None -> None
-  | Some x ->
-    if validate x
-    then Some (String.strip x)
-    else
-      Some
-        (String.strip @@ ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ())
+  (match v with
+   | None -> None
+   | Some x ->
+     if validate x
+     then Some x
+     else Some (ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ()))
+  |> Option.map ~f:String.strip
 ;;
 
 let get_sort_order v =
   let msg = "Enter sort order (asc or desc): "
   and retry_msg = {|Sort order should be either one of 'asc' or 'desc": |}
   and validate input = validate_fields [ "asc"; "desc" ] input in
-  match v with
-  | None -> None
-  | Some x ->
-    if validate x
-    then Some x
-    else
-      Some
-        (String.strip @@ ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ())
+  (match v with
+   | None -> None
+   | Some x ->
+     if validate x
+     then Some x
+     else Some (ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ()))
+  |> Option.map ~f:String.strip
 ;;
 
 let search ~search_term ~search_field ~sort_field ~sort_order () =
