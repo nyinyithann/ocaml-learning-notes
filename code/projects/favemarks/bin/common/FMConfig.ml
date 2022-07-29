@@ -1,4 +1,5 @@
 open Core
+open Common
 
 let config_path = "/.favemarks.config"
 let db_path_key = "Db_Path_Key"
@@ -57,7 +58,7 @@ let get_db_path () =
      | Ok l ->
        (match
           List.find l ~f:(fun (fst, _) ->
-            String.(equal (uppercase (strip fst)) (uppercase db_path_key)))
+            String.(equal (strip_and_lowercase fst) (lowercase db_path_key)))
         with
         | Some (_, snd) -> set_cache_and_return (String.strip snd)
         | _ -> config_not_found_error_msg db_path_key)
@@ -76,7 +77,7 @@ let get_open_with () =
      | Ok l ->
        (match
           List.find l ~f:(fun (fst, _) ->
-            String.(equal (uppercase (strip fst)) (uppercase open_with_key)))
+            String.(equal (strip_and_lowercase fst) (lowercase open_with_key)))
         with
         | Some (_, snd) -> set_cache_and_return (String.strip snd)
         | _ -> set_cache_and_return "Chrome")
@@ -105,7 +106,7 @@ let get_page_size () =
      | Ok l ->
        (match
           List.find l ~f:(fun (fst, _) ->
-            String.(equal (uppercase (strip fst)) (uppercase page_size_key)))
+            String.(equal (strip_and_lowercase fst) (lowercase page_size_key)))
         with
         | Some (_, snd) -> set_cache_and_return snd
         | _ -> set_cache_and_return (string_of_int default_page_size))

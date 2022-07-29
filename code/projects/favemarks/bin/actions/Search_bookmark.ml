@@ -47,8 +47,7 @@ let get_search_field v =
      if validate x
      then x
      else ask_again_if_invalid ~validate ~retry_first:() ~msg ~retry_msg ())
-  |> String.strip
-  |> String.lowercase
+  |> strip_and_lowercase
 ;;
 
 let get_search_term v =

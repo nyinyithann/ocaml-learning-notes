@@ -18,7 +18,7 @@ let show_menu
   if current_page < total_pages - 1 then add_prompt_msg "To go to next page, press j.";
   if current_page > 0 && current_page < total_pages
   then add_prompt_msg "To go to the previous page, press k.";
-  add_prompt_msg "To open a url in the default browser, press the letter in Open column.";
+  add_prompt_msg "To open a url in the default browser, press o.";
   add_prompt_msg "To update a record, press u.";
   add_prompt_msg "To delete a record, press d.";
   add_prompt_msg "To quit, press q.";
@@ -59,10 +59,11 @@ let show_menu
       data
   else if Char.equal c 'd'
   then Delete_bookmark.delete data
+  else if Char.equal c 'o'
+  then Open_bookmark.open_links data
   else if Char.equal c 'q'
   then new_line ()
-  else (
-    Open_bookmark.open_url ~ch:c ~data;
+  else
     search
       ?search_field
       ?search_term
@@ -70,5 +71,5 @@ let show_menu
       ?sort_order
       ~current_page
       ~total_count
-      ())
+      ()
 ;;

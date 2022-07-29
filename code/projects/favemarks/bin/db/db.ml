@@ -59,9 +59,9 @@ let get_search_total_count ~search_field ~search_term =
 
 let generate_mnemonics () =
   let page_size = FMConfig.get_page_size () in
-  Array.init (page_size + 5) ~f:(fun x -> String.of_char @@ Char.of_int_exn (x + 97))
+  Array.init (page_size + 6) ~f:(fun x -> String.of_char @@ Char.of_int_exn (x + 97))
   |> Array.filter ~f:(fun x ->
-       String.(x <> "u" && x <> "d" && x <> "q" && x <> "j" && x <> "k"))
+       String.(x <> "u" && x <> "d" && x <> "q" && x <> "j" && x <> "k" && x <> "o"))
 ;;
 
 let save ~url ~tags =

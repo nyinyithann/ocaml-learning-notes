@@ -1,6 +1,7 @@
 open Core
 
 let is_whitespace s = s |> String.strip |> String.is_empty
+let strip_and_lowercase s = String.(lowercase @@ strip s)
 let epoch_str () = Time_unix.to_string Time_unix.epoch
 
 let time_of_string str =

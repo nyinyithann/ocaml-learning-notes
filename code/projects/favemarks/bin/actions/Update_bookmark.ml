@@ -6,7 +6,7 @@ open UI_prompt
 let get_id ~msg data =
   let retry_msg = "id not found in the loaded records. Please try again."
   and validate input =
-    let si = String.(lowercase @@ strip input) in
+    let si = strip_and_lowercase input in
     Queue.exists data ~f:(fun x -> String.(string_of_int x.Model.id = si))
     || String.(si = "q")
   in
