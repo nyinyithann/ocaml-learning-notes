@@ -52,7 +52,8 @@ let validate_tags tags =
 ;;
 
 let validate_fields fields input =
-  fields |> List.exists ~f:(fun x -> String.(x = lowercase @@ strip input))
+  fields
+  |> List.exists ~f:(fun x -> String.(strip_and_lowercase x = strip_and_lowercase input))
 ;;
 
 let tuple_of_first_two = function

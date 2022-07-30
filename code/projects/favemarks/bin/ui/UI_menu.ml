@@ -13,15 +13,20 @@ let show_menu
   ~search
   data
   =
+  let go_home =
+    search ?search_field ?search_term ?sort_field ?sort_order ~current_page ~total_count
+  in
   let menu_text = Queue.create () in
-  let add_prompt_msg = Queue.enqueue menu_text in
-  if current_page < total_pages - 1 then add_prompt_msg "To go to next page, press j.";
-  if current_page > 0 && current_page < total_pages
-  then add_prompt_msg "To go to the previous page, press k.";
-  add_prompt_msg "To open a url in the default browser, press o.";
-  add_prompt_msg "To update a record, press u.";
-  add_prompt_msg "To delete a record, press d.";
-  add_prompt_msg "To quit, press q.";
+  let add_prompt_msg title key =
+    Queue.enqueue menu_text @@ sprintf "%-14s:%4s" title key
+  in
+  if current_page < total_pages - 1 then add_prompt_msg "NEXT" "j";
+  if current_page > 0 && current_page < total_pages then add_prompt_msg "PREVIOUS" "k";
+  add_prompt_msg "OPEN" "o";
+  add_prompt_msg "UPDATE" "u";
+  add_prompt_msg "DELETE" "d";
+  add_prompt_msg "RELOAD" "r";
+  add_prompt_msg "QUIT" "q";
   print_lines @@ Queue.to_list menu_text;
   new_line ();
   ask_input "Enter your choice: ";
@@ -58,7 +63,7 @@ let show_menu
       ~search
       data
   else if Char.equal c 'd'
-  then Delete_bookmark.delete data
+  then Delete_bookmark.delete ~go_home ~data
   else if Char.equal c 'o'
   then Open_bookmark.open_links data
   else if Char.equal c 'q'
