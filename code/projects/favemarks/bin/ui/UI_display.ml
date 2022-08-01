@@ -18,7 +18,7 @@ let print_noti msg =
   new_line ()
 ;;
 
-let print_lines l = l |> List.iter ~f:(printf " 🔵 %s\n%!")
+let print_lines l = l |> List.iter ~f:(printf " %s\n%!")
 
 let show_title () =
   T.erase T.Screen;
@@ -42,28 +42,49 @@ let show_page_info current_page total_pages total_count =
 let display_table ~total_count ~total_pages ~current_page l =
   let columns =
     let open Ascii_table_kernel in
-    [ Column.create
+    [ Column.create_attr
         ~align:Align.Left
         ~min_width:6
         ~max_width:6
-        "Open"
-        (fun (x : Model.bookmark) -> x.mnemonic)
-    ; Column.create
+        "Key"
+        (fun (x : Model.bookmark) -> [ `Green; `Underscore ], x.mnemonic)
+    ; Column.create_attr
         ~align:Align.Left
         ~min_width:8
         ~max_width:8
         "Id"
-        (fun (x : Model.bookmark) -> string_of_int x.id)
-    ; Column.create ~align:Align.Left ~min_width:35 "Url" (fun (x : Model.bookmark) ->
-        x.url)
-    ; Column.create ~align:Align.Left ~min_width:35 "Tags" (fun (x : Model.bookmark) ->
-        x.tags)
-    ; Column.create ~align:Align.Left ~min_width:20 "Date" (fun (x : Model.bookmark) ->
-        Common.string_of_time x.date)
+        (fun (x : Model.bookmark) -> [ `Blue ], string_of_int x.id)
+    ; Column.create_attr
+        ~align:Align.Left
+        ~min_width:35
+        "Url"
+        (fun (x : Model.bookmark) -> [ `Blue ], x.url)
+    ; Column.create_attr
+        ~align:Align.Left
+        ~min_width:35
+        "Tags"
+        (fun (x : Model.bookmark) -> [ `Blue ], x.tags)
+    ; Column.create_attr
+        ~align:Align.Left
+        ~min_width:20
+        "Date"
+        (fun (x : Model.bookmark) -> [ `Blue ], Common.string_of_time x.date)
     ]
   in
   show_title ();
-  Ascii_table.output ~oc:stdout ~limit_width_to:140 ~bars:`Unicode columns l;
+  Ascii_table.output
+    ~oc:stdout
+    ~limit_width_to:140
+    ~header_attr:[ `Cyan; `Bright ]
+    ~bars:`Unicode
+    columns
+    l;
 
   show_page_info current_page total_pages total_count
+;;
+
+let with_console_report ~(f : unit -> (string, string) result) =
+  match f () with
+  | Ok s -> print_ok_msg s
+  | Error e -> print_error_msg e
 ;;

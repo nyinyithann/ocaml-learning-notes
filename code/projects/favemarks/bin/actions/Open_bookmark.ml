@@ -15,7 +15,7 @@ let open_url url =
     then url
     else "https://" ^ url
   in
-  match FMConfig.get_open_with () with
+  match Config_store.get_open_with () with
   | Ok open_with ->
     (match Browser.get_browser_name open_with with
      | Ok bn ->
@@ -84,16 +84,17 @@ let open_links data =
     | _ -> []
   in
   let fork_open l =
-    match Caml_unix.fork () with
+    let open Caml_unix in
+    match fork () with
     | 0 -> open_url l
     | _ ->
-      let _, status = Caml_unix.wait () in
+      let _, status = wait () in
       (match status with
-       | Caml_unix.WEXITED 255 -> print_error_msg @@ sprintf "%s cannot be opened" l
-       | Caml_unix.WEXITED _ -> print_ok_msg @@ sprintf "%s: opened successfully" l
-       | Caml_unix.WSIGNALED signal ->
+       | WEXITED 255 -> print_error_msg @@ sprintf "%s cannot be opened" l
+       | WEXITED _ -> print_ok_msg @@ sprintf "%s: opened successfully" l
+       | WSIGNALED signal ->
          print_error_msg @@ sprintf "browser is killed by signal %d" signal
-       | Caml_unix.WSTOPPED _ -> print_error_msg @@ sprintf "browser stopped")
+       | WSTOPPED _ -> print_error_msg @@ sprintf "browser stopped")
   in
   links |> List.iter ~f:fork_open
 ;;

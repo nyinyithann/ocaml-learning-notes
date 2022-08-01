@@ -38,13 +38,13 @@ let get_open_with v =
 ;;
 
 let set_page_size page_size =
-  match FMConfig.set_page_size page_size with
+  match Config_store.set_page_size page_size with
   | Ok s -> print_ok_msg s
   | Error e -> print_error_msg e
 ;;
 
 let set_open_with open_with =
-  match FMConfig.set_open_with open_with with
+  match Config_store.set_open_with open_with with
   | Ok s -> print_ok_msg s
   | Error e -> print_error_msg e
 ;;

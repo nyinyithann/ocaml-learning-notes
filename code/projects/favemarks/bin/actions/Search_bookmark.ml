@@ -2,39 +2,7 @@ open Core
 open Common
 open UI_display
 open UI_prompt
-open UI_menu
-
-let rec search_aux
-  ?search_field
-  ?search_term
-  ?sort_field
-  ?sort_order
-  ~current_page
-  ~total_count
-  ()
-  =
-  let page_size = FMConfig.get_page_size () in
-  let offset = current_page * page_size in
-  match
-    Db.load ~limit:page_size ~offset ?search_field ?search_term ?sort_field ?sort_order ()
-  with
-  | Ok data ->
-    let total_pages =
-      Float.(round_up (float_of_int total_count / float_of_int page_size)) |> Float.to_int
-    in
-    display_table ~total_count ~current_page ~total_pages (Queue.to_list data);
-    show_menu
-      ?search_field
-      ?search_term
-      ?sort_field
-      ?sort_order
-      ~total_pages
-      ~current_page
-      ~total_count
-      ~search:search_aux
-      data
-  | Error e -> print_error_msg e
-;;
+(* open UI_menu *)
 
 let get_search_field v =
   let msg = "Enter search field (id or url or tags or all): "
@@ -90,24 +58,78 @@ let get_sort_order v =
   |> Option.map ~f:String.strip
 ;;
 
-let search ~search_term ~search_field ~sort_field ~sort_order () =
-  let search_term = get_search_term search_term
-  and search_field = get_search_field search_field
-  and sort_field = get_sort_field sort_field
-  and sort_order = get_sort_order sort_order in
-  let sf = if String.equal search_field "all" then "id, url, tags" else search_field in
-  match Db.get_search_total_count ~search_field:sf ~search_term with
-  | Ok c ->
-    if c = 0
-    then show_empty ()
-    else
-      search_aux
-        ~search_field:sf
-        ~search_term
-        ?sort_field
-        ?sort_order
-        ~current_page:0
-        ~total_count:c
-        ()
+(* let rec search_aux *)
+(*   ~search_field *)
+(*   ~search_term *)
+(*   ?sort_field *)
+(*   ?sort_order *)
+(*   ~current_page *)
+(*   ~total_count *)
+(*   () *)
+(*   = *)
+(*   let page_size = Config_store.get_page_size () in *)
+(*   let offset = current_page * page_size in *)
+(*   match *)
+(*     Data_store.load *)
+(*       ~mode:(Model.Search { search_field; search_term; sort_field; sort_order }) *)
+(*       ~limit:page_size *)
+(*       ~offset *)
+(*   with *)
+(*   | Ok data -> *)
+(*     let total_pages = *)
+(*       Float.(round_up (float_of_int total_count / float_of_int page_size)) |> Float.to_int *)
+(*     in *)
+(*     display_table ~total_count ~current_page ~total_pages (Queue.to_list data) *)
+(*     show_menu *)
+(*       ?search_field *)
+(*       ?search_term *)
+(*       ?sort_field *)
+(*       ?sort_order *)
+(*       ~total_pages *)
+(*       ~current_page *)
+(*       ~total_count *)
+(*       ~search:search_aux *)
+(*       data *)
+(*   | Error e -> print_error_msg e *)
+(* ;; *)
+
+let search_aux ~mode =
+  match Data_store.search ~mode with
+  | Ok { total_count; total_search_count; total_pages; current_page; bookmarks; _ } ->
+    display_table ~total_count ~current_page ~total_pages bookmarks
+    (* show_menu *)
+    (*   ?search_field *)
+    (*   ?search_term *)
+    (*   ?sort_field *)
+    (*   ?sort_order *)
+    (*   ~total_pages *)
+    (*   ~current_page *)
+    (*   ~total_count *)
+    (*   ~search:search_aux *)
+    (*   data *)
   | Error e -> print_error_msg e
 ;;
+
+let search ~search_term ~search_field ~sort_field ~sort_order () =
+  let search_term = get_search_term search_term in
+  let search_field =
+    let sf = get_search_field search_field in
+    if String.(strip_and_lowercase sf = "all") then "id, url, tags" else sf
+  and sort_field = get_sort_field sort_field
+  and sort_order = get_sort_order sort_order in
+  search_aux ~mode:(Model.Search { search_field; search_term; sort_field; sort_order })
+;;
+(* match  with *)
+(* | Ok c -> *)
+(*   if c = 0 *)
+(*   then show_empty () *)
+(*   else *)
+(*     search_aux *)
+(*       ~search_field:sf *)
+(*       ~search_term *)
+(*       ?sort_field *)
+(*       ?sort_order *)
+(*       ~current_page:0 *)
+(*       ~total_count:c *)
+(*       () *)
+(* | Error e -> print_error_msg e *)

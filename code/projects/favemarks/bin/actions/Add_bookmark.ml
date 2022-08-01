@@ -1,9 +1,9 @@
-open Core
-open UI_display
 open UI_prompt
+open UI_display
 open Common
 
 let get_url v =
+  let open Core in
   let msg = "Enter a url: "
   and retry_msg = "A valid url must be provided." in
   (match v with
@@ -16,6 +16,7 @@ let get_url v =
 ;;
 
 let get_tags v =
+  let open Core in
   let msg = "Enter comma-delimited tags: "
   and retry_msg =
     "One or more comma-delimited tags must be provided. Tags should not have space."
@@ -32,7 +33,5 @@ let get_tags v =
 let add ~url ~tags =
   let url = get_url url
   and tags = get_tags tags in
-  match Db.save ~url ~tags with
-  | Result.Ok s -> print_ok_msg s
-  | Result.Error e -> print_error_msg e
+  with_console_report ~f:(fun () -> Data_store.add ~url ~tags)
 ;;

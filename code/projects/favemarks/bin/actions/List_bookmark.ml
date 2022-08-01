@@ -1,6 +1,7 @@
 open Core
-open UI_display
-open UI_menu
+(* open UI_display *)
+
+(* open UI_menu *)
 open UI_prompt
 open Common
 
@@ -36,26 +37,27 @@ let get_sort_order v =
 let ls ?sort_field ?sort_order () =
   let sort_field = get_sort_field sort_field
   and sort_order = get_sort_order sort_order in
-  match Db.get_total_count () with
-  | Ok total_count ->
-    if total_count = 0
-    then show_empty ()
-    else (
-      let page_size = FMConfig.get_page_size () in
-      let offset = current_page * page_size in
-      match Db.load ~limit:page_size ~offset ?sort_field ?sort_order () with
-      | Ok data ->
-        let total_pages =
-          Float.(round_up (float_of_int total_count / float_of_int page_size))
-          |> Float.to_int
-        in
-        display_table ~total_count ~current_page ~total_pages (Queue.to_list data);
-        show_menu
-          ~total_pages
-          ~current_page
-          ~total_count
-          ~search:Search_bookmark.search_aux
-          data
-      | Error e -> print_error_msg e)
-  | Error e -> print_error_msg e
+  printf "%s %s" (Option.value_exn sort_field) (Option.value_exn sort_order)
 ;;
+(* match Db.get_total_count () with *)
+(* | Ok total_count -> *)
+(*   if total_count = 0 *)
+(*   then show_empty () *)
+(*   else ( *)
+(*     let page_size = Config_store.get_page_size () in *)
+(*     let offset = current_page * page_size in *)
+(*     match Db.load ~limit:page_size ~offset ?sort_field ?sort_order () with *)
+(*     | Ok data -> *)
+(*       let total_pages = *)
+(*         Float.(round_up (float_of_int total_count / float_of_int page_size)) *)
+(*         |> Float.to_int *)
+(*       in *)
+(*       display_table ~total_count ~current_page ~total_pages (Queue.to_list data); *)
+(*       show_menu *)
+(*         ~total_pages *)
+(*         ~current_page *)
+(*         ~total_count *)
+(*         ~search:Search_bookmark.search_aux *)
+(*         data *)
+(*     | Error e -> print_error_msg e) *)
+(* | Error e -> print_error_msg e *)

@@ -1,6 +1,7 @@
 open Core
 open UI_display
 open UI_prompt
+module T = ANSITerminal
 
 let show_menu
   ?search_field
@@ -17,16 +18,24 @@ let show_menu
     search ?search_field ?search_term ?sort_field ?sort_order ~current_page ~total_count
   in
   let menu_text = Queue.create () in
-  let add_prompt_msg title key =
-    Queue.enqueue menu_text @@ sprintf "%-14s:%4s" title key
+  let add_prompt_msg l =
+    let buffer = Buffer.create 80 in
+    l
+    |> List.iter ~f:(fun (title, key) ->
+         Buffer.add_string buffer
+         @@ T.sprintf
+              [ T.Foreground T.Cyan ]
+              "⊜ %-8s:%s%4s"
+              title
+              (T.sprintf [ T.Foreground T.Blue ] "%2s" key)
+              "");
+    Queue.enqueue menu_text @@ Buffer.contents buffer
   in
-  if current_page < total_pages - 1 then add_prompt_msg "NEXT" "j";
-  if current_page > 0 && current_page < total_pages then add_prompt_msg "PREVIOUS" "k";
-  add_prompt_msg "OPEN" "o";
-  add_prompt_msg "UPDATE" "u";
-  add_prompt_msg "DELETE" "d";
-  add_prompt_msg "RELOAD" "r";
-  add_prompt_msg "QUIT" "q";
+  add_prompt_msg [ "Add", "a"; "Search", "s"; "Next", "j"; "Quit", "q" ];
+  add_prompt_msg [ "Update", "u"; "List", "l"; "Previous", "k" ];
+  add_prompt_msg [ "Delete", "d"; "Open", "o"; "Info", "i" ];
+  (* if current_page < total_pages - 1 then add_prompt_msg "NEXT" "j"; *)
+  (* if current_page > 0 && current_page < total_pages then add_prompt_msg "PREVIOUS" "k"; *)
   print_lines @@ Queue.to_list menu_text;
   new_line ();
   ask_input "Enter your choice: ";

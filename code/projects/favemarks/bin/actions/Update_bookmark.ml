@@ -1,9 +1,9 @@
-open Core
 open Common
 open UI_display
 open UI_prompt
 
 let get_id ~msg data =
+  let open Core in
   let retry_msg = "id not found in the loaded records. Please try again."
   and validate input =
     let si = strip_and_lowercase input in
@@ -14,6 +14,7 @@ let get_id ~msg data =
 ;;
 
 let get_modified_url existing_url =
+  let open Core in
   print_noti (sprintf "Existing url: %s" existing_url);
   let msg = "Enter modified url or nothing to skip: "
   and retry_msg = "A valid url must be provided." in
@@ -21,6 +22,7 @@ let get_modified_url existing_url =
 ;;
 
 let get_modified_tags existing_tags =
+  let open Core in
   print_noti (sprintf "Existing tags: %s" existing_tags);
   let msg = "Enter modified tags or nothing to skip: "
   and retry_msg =
@@ -41,18 +43,19 @@ let update
   =
   new_line ();
   let id = get_id ~msg:"Enter id to update or q to quit: " data in
-  if String.(id = "q")
+  if Core.String.(id = "q")
   then ()
   else (
-    match Queue.find data ~f:(fun x -> String.equal (string_of_int x.Model.id) id) with
+    match
+      Core.Queue.find data ~f:(fun x -> String.equal (string_of_int x.Model.id) id)
+    with
     | Some { Model.url; tags; _ } ->
       let modified_url = get_modified_url url in
       let modified_tags = get_modified_tags tags in
-      if String.(modified_url <> url || modified_tags <> tags)
-      then (
-        match Db.update ~id:(int_of_string id) ~url:modified_url ~tags:modified_tags with
-        | Result.Ok s -> print_ok_msg s
-        | Result.Error e -> print_error_msg e);
+      if Core.String.(modified_url <> url || modified_tags <> tags)
+      then
+        with_console_report ~f:(fun () ->
+          Data_store.update ~id:(int_of_string id) ~url:modified_url ~tags:modified_tags);
       search
         ?search_field
         ?search_term
@@ -63,5 +66,5 @@ let update
         ()
     | _ ->
       print_error_msg
-        (sprintf "Record with id %s is not found in the currently loaded data." id))
+        (Core.sprintf "Record with id %s is not found in the currently loaded data." id))
 ;;
