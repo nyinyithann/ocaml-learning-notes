@@ -25,8 +25,7 @@ let show_title () =
   T.set_cursor 0 0;
   T.print_string
     [ T.Foreground T.Green; T.Bold ]
-    (sprintf "\n ☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.");
-  new_line ()
+    (sprintf "\n ☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.\n")
 ;;
 
 let show_page_info current_page total_pages total_count =
@@ -39,7 +38,7 @@ let show_page_info current_page total_pages total_count =
        total_count)
 ;;
 
-let display_table ~total_count ~total_pages ~current_page l =
+let display_table state =
   let columns =
     let open Ascii_table_kernel in
     [ Column.create_attr
@@ -78,8 +77,11 @@ let display_table ~total_count ~total_pages ~current_page l =
     ~header_attr:[ `Cyan; `Bright ]
     ~bars:`Unicode
     columns
-    l;
+    (State.get_bookmarks state);
 
+  let current_page = State.get_current_page state in
+  let total_pages = State.get_total_pages state in
+  let total_count = State.get_total_count state in
   show_page_info current_page total_pages total_count
 ;;
 

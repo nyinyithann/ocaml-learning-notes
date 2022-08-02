@@ -45,7 +45,12 @@ let search_command =
          ~doc:"string One of the fields (url, tags) to search against"
      in
      fun () ->
-       Search_bookmark.search ~search_term ~search_field ~sort_field ~sort_order ())
+       ListSearch_bookmarks.Search.search
+         ~search_term
+         ~search_field
+         ~sort_field
+         ~sort_order
+         ())
 ;;
 
 let ls_command =
@@ -64,7 +69,7 @@ let ls_command =
          (optional string)
          ~doc:"string One of the fields (url, tags, id, date) to sort against"
      in
-     fun () -> List_bookmark.ls ?sort_field ?sort_order ())
+     fun () -> ListSearch_bookmarks.Ls.ls ?sort_field ?sort_order ())
 ;;
 
 let set_config_command =
