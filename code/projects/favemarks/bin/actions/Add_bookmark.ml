@@ -30,7 +30,15 @@ let get_tags v =
   |> strip_space_and_concat ~sep:","
 ;;
 
+let add_with_return ~url ~tags =
+  new_line ();
+  let url = get_url url
+  and tags = get_tags tags in
+  Data_store.add ~url ~tags
+;;
+
 let add ~url ~tags =
+  new_line ();
   let url = get_url url
   and tags = get_tags tags in
   with_console_report ~f:(fun () -> Data_store.add ~url ~tags)

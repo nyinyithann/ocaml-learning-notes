@@ -4,6 +4,12 @@ let is_whitespace s = s |> String.strip |> String.is_empty
 let strip_and_lowercase s = String.(lowercase @@ strip s)
 let epoch_str () = Time_unix.to_string Time_unix.epoch
 
+let result_to_msg_opt (r : (string, string) result) =
+  match r with
+  | Ok s -> Some s
+  | Error e -> Some e
+;;
+
 let time_of_string str =
   try Time_unix.of_string str with
   | _ -> Time_unix.epoch

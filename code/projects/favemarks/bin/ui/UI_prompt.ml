@@ -3,11 +3,11 @@ open UI_display
 module T = ANSITerminal
 
 let ask_input msg =
-  T.print_string [ T.Foreground T.Blue ] (sprintf " » %s" msg);
+  T.print_string [ T.Foreground T.Blue ] (sprintf "» %s" msg);
   printf "%!"
 ;;
 
-let ask_retry msg = T.print_string [ T.Foreground T.Magenta ] (sprintf " 💪  %s\n%!" msg)
+let ask_retry msg = T.print_string [ T.Foreground T.Magenta ] (sprintf "💪  %s\n%!" msg)
 
 let ask_again_if_invalid ?validate ?retry_first ~msg ~retry_msg () =
   let rec aux () =
@@ -53,14 +53,10 @@ let ask_again_or_default ?validate ~msg ~retry_msg default =
 ;;
 
 let get_one_char () =
-  let termio = Caml_unix.tcgetattr Caml_unix.stdin in
-  let () =
-    Caml_unix.tcsetattr
-      Caml_unix.stdin
-      Caml_unix.TCSADRAIN
-      { termio with Caml_unix.c_icanon = false }
-  in
+  let open Caml_unix in
+  let termio = tcgetattr stdin in
+  let () = tcsetattr stdin TCSADRAIN { termio with c_icanon = false } in
   let res = Caml.input_char Caml.stdin in
-  Caml_unix.tcsetattr Core_unix.stdin Caml_unix.TCSADRAIN termio;
+  tcsetattr Core_unix.stdin TCSADRAIN termio;
   res
 ;;

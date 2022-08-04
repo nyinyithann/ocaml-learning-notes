@@ -4,14 +4,17 @@ open Core.Result
 
 let get_total_count ~db_path =
   try
-    let& db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
     let sql = sprintf "SELECT COUNT(*) FROM bookmarks" in
     let stmt = prepare db sql in
     ignore @@ step stmt;
-    Ok (column_int stmt 0)
+    let c = column_int stmt 0 in
+    ignore @@ finalize stmt;
+    ignore @@ db_close db;
+    Ok c
   with
   | SqliteError s -> Error s
-  | e -> Error (sprintf "%s" (Exn.to_string e))
+  | e -> Error (sprintf "db.get_total_count: %s." (Exn.to_string e))
 ;;
 
 let get_like_clauses search_field search_term =
@@ -32,7 +35,7 @@ let get_like_clauses search_field search_term =
 
 let get_search_total_count ~db_path ~search_field ~search_term =
   try
-    let& db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
     let sql =
       sprintf
         "SELECT COUNT(*) FROM bookmarks WHERE %s"
@@ -40,22 +43,18 @@ let get_search_total_count ~db_path ~search_field ~search_term =
     in
     let stmt = prepare db sql in
     ignore @@ step stmt;
-    Ok (column_int stmt 0)
+    let c = column_int stmt 0 in
+    ignore @@ finalize stmt;
+    ignore @@ db_close db;
+    Ok c
   with
   | SqliteError s -> Error s
-  | e -> Error (sprintf "%s" (Exn.to_string e))
-;;
-
-let generate_mnemonics () =
-  let page_size = Config_store.get_page_size () in
-  Array.init (page_size + 6) ~f:(fun x -> String.of_char @@ Char.of_int_exn (x + 97))
-  |> Array.filter ~f:(fun x ->
-       String.(x <> "u" && x <> "d" && x <> "q" && x <> "j" && x <> "k" && x <> "o"))
+  | e -> Error (sprintf "db.get_search_total_count: %s." (Exn.to_string e))
 ;;
 
 let add ~db_path ~url ~tags =
+  let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
   try
-    let& db = db_open ~mode:`NO_CREATE ~uri:true db_path in
     let sql =
       sprintf
         "INSERT INTO bookmarks(url, tags, date) VALUES('%s', '%s', '%s')"
@@ -65,18 +64,23 @@ let add ~db_path ~url ~tags =
     in
     let result =
       match exec db sql with
-      | Rc.OK -> Ok (sprintf "Successfully saved with id %Ld\n" (last_insert_rowid db))
-      | e -> Error (sprintf "%s.%s" (Rc.to_string e) (errmsg db))
+      | Rc.OK -> Ok (sprintf "%s is added with id %Ld." url (last_insert_rowid db))
+      | e -> Error (sprintf "db.add: %s. %s." (Rc.to_string e) (errmsg db))
     in
+    ignore @@ db_close db;
     result
   with
-  | SqliteError s -> Error s
-  | e -> Error (sprintf "%s" (Exn.to_string e))
+  | SqliteError s ->
+    ignore @@ db_close db;
+    Error s
+  | e ->
+    ignore @@ db_close db;
+    Error (sprintf "db.add: %s." (Exn.to_string e))
 ;;
 
 let update ~db_path ~id ~url ~tags =
   try
-    let& db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
     let sql =
       sprintf
         "UPDATE bookmarks SET url = '%s', tags = '%s', date = '%s' WHERE id = %d"
@@ -87,33 +91,36 @@ let update ~db_path ~id ~url ~tags =
     in
     let result =
       match exec db sql with
-      | Rc.OK -> Ok (sprintf "Successfully updated record with id %d\n" id)
-      | e -> Error (sprintf "%s.%s" (Rc.to_string e) (errmsg db))
+      | Rc.OK -> Ok (sprintf "Successfully updated record with id %d." id)
+      | e -> Error (sprintf "db.update: %s. %s." (Rc.to_string e) (errmsg db))
     in
+    ignore @@ db_close db;
     result
   with
   | SqliteError s -> Error s
-  | e -> Error (sprintf "%s" (Exn.to_string e))
+  | e -> Error (sprintf "db.update: %s." (Exn.to_string e))
 ;;
 
 let delete ~db_path ~id =
   try
-    let& db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
     let sql = sprintf "DELETE FROM bookmarks WHERE id = %d" id in
     let result =
       match exec db sql with
-      | Rc.OK -> Ok (sprintf "Successfully deleted a record with id %d\n" id)
-      | e -> Error (sprintf "%s.%s" (Rc.to_string e) (errmsg db))
+      | Rc.OK -> Ok (sprintf "Deleted a record with id %d" id)
+      | e -> Error (sprintf "db.delete: %s. %s." (Rc.to_string e) (errmsg db))
     in
+    ignore @@ db_close db;
     result
   with
   | SqliteError s -> Error s
-  | e -> Error (sprintf "%s" (Exn.to_string e))
+  | e -> Error (sprintf "db.delete: %s." (Exn.to_string e))
 ;;
 
 let load ~db_path ~mode ~limit ~offset =
   try
-    let& db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    busy_timeout db 1500;
     let data_queue = Queue.create ~capacity:limit () in
     let sql =
       match mode with
@@ -137,9 +144,11 @@ let load ~db_path ~mode ~limit ~offset =
           limit
           offset
     in
-    let stmt = prepare db sql in
     let idx = ref 0 in
-    let mnemonics = generate_mnemonics () in
+    let mnemonics =
+      Array.init 26 ~f:(fun x -> String.of_char @@ Char.of_int_exn (x + 97))
+    in
+    let stmt = prepare db sql in
     while Poly.(step stmt = Rc.ROW) do
       let id = column_int stmt 0
       and url = column_text stmt 1
@@ -155,8 +164,10 @@ let load ~db_path ~mode ~limit ~offset =
         };
       incr idx
     done;
+    ignore @@ finalize stmt;
+    ignore @@ db_close db;
     Ok data_queue
   with
   | SqliteError s -> Error s
-  | e -> Error (sprintf "%s" (Exn.to_string e))
+  | e -> Error (sprintf "db.load: %s." (Exn.to_string e))
 ;;

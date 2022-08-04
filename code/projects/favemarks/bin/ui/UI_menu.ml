@@ -1,6 +1,7 @@
 open Core
 open UI_display
 open UI_prompt
+open Common
 module T = ANSITerminal
 
 let show_menu ~state ~ls ~search ~fn_aux () =
@@ -23,19 +24,26 @@ let show_menu ~state ~ls ~search ~fn_aux () =
   add_prompt_msg [ "Delete", "d"; "Open", "o"; "Info", "i" ];
   print_lines @@ Queue.to_list menu_text;
   new_line ();
-  ask_input "Enter your choice: ";
+  ask_input "Your choice: ";
   let c = Char.lowercase (get_one_char ()) in
 
   let current_page = State.get_current_page state in
   let total_pages = State.get_total_pages state in
 
-  if Char.(c = 'j') && current_page < total_pages - 1
+  if Char.(c = 'a')
+  then (
+    let r = Add_bookmark.add_with_return ~url:None ~tags:None in
+    State.set_status state (result_to_msg_opt r);
+    fn_aux ~state)
+  else if Char.(c = 'j') && current_page < total_pages - 1
   then (
     State.set_current_page state (State.get_current_page state + 1);
+    State.set_status state None;
     fn_aux ~state)
   else if Char.(c = 'k') && current_page > 0
   then (
     State.set_current_page state (State.get_current_page state - 1);
+    State.set_status state None;
     fn_aux ~state)
   else if Char.(c = 's')
   then search ~search_term:None ~search_field:None ~sort_field:None ~sort_order:None ()
@@ -54,9 +62,11 @@ let show_menu ~state ~ls ~search ~fn_aux () =
     (*   data *)
     ()
   else if Char.(c = 'd')
-  then () (* Delete_bookmark.delete ~go_home ~data *)
+  then Delete_bookmark.delete ~go_home:fn_aux ~state
   else if Char.(c = 'o')
-  then () (* Open_bookmark.open_links data *)
+  then (
+    State.set_status state @@ Some (Open_bookmark.open_links ~state);
+    fn_aux ~state)
   else if Char.(c = 'q')
   then new_line ()
   else fn_aux ~state

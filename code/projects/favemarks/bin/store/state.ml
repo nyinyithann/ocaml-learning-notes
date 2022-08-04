@@ -6,6 +6,7 @@ type t =
   ; mutable current_page : int
   ; mutable page_size : int
   ; mutable bookmarks : Model.bookmark list
+  ; mutable status : string option
   }
 
 let create () =
@@ -16,19 +17,9 @@ let create () =
   ; current_page = 0
   ; page_size = Config_store.get_page_size ()
   ; bookmarks = []
+  ; status = None
   }
 ;;
-
-(* let set_state state ?mode ~total_count ?search_count ~page_size ~bookmarks () = *)
-(*   state.mode <- mode; *)
-(*   state.total_count <- total_count; *)
-(*   state.total_search_count <- search_count; *)
-(*   state.total_pages *)
-(*     <- (Float.to_int *)
-(*        @@ Float.(round_up (float_of_int total_count / float_of_int page_size))); *)
-(*   state.page_size <- page_size; *)
-(*   state.bookmarks <- bookmarks *)
-(* ;; *)
 
 let get_mode state = state.mode
 let set_mode state mode = state.mode <- mode
@@ -44,3 +35,5 @@ let get_current_page state = state.current_page
 let set_current_page state page = state.current_page <- page
 let get_bookmarks state = state.bookmarks
 let set_bookmarks state bookmarks = state.bookmarks <- bookmarks
+let get_status state = state.status
+let set_status state status = state.status <- status
