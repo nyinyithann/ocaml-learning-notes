@@ -89,7 +89,7 @@ let display_table state =
         ~min_width:6
         ~max_width:6
         "Key"
-        (fun (x : Model.bookmark) -> [ `Green; `Underscore ], x.mnemonic)
+        (fun (x : Model.bookmark) -> [ `Green ], x.mnemonic)
     ; Column.create_attr
         ~align:Align.Left
         ~min_width:8

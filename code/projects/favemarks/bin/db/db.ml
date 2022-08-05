@@ -91,7 +91,7 @@ let update ~db_path ~id ~url ~tags =
     in
     let result =
       match exec db sql with
-      | Rc.OK -> Ok (sprintf "Successfully updated record with id %d." id)
+      | Rc.OK -> Ok (sprintf "Record with id %d is updated." id)
       | e -> Error (sprintf "db.update: %s. %s." (Rc.to_string e) (errmsg db))
     in
     ignore @@ db_close db;
@@ -117,10 +117,32 @@ let delete ~db_path ~id =
   | e -> Error (sprintf "db.delete: %s." (Exn.to_string e))
 ;;
 
+let load_all ~db_path =
+  try
+    let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
+    let data_queue = Queue.create () in
+    let sql = "SELECT * FROM bookmarks ORDER BY id DESC" in
+    let stmt = prepare db sql in
+    while Poly.(step stmt = Rc.ROW) do
+      let id = column_int stmt 0
+      and url = column_text stmt 1
+      and tags = column_text stmt 2
+      and date = column_text stmt 3 in
+      Queue.enqueue
+        data_queue
+        { Model.id; mnemonic = ""; url; tags; date = Common.time_of_string date }
+    done;
+    ignore @@ finalize stmt;
+    ignore @@ db_close db;
+    Ok data_queue
+  with
+  | SqliteError s -> Error s
+  | e -> Error (sprintf "db.load_all: %s." (Exn.to_string e))
+;;
+
 let load ~db_path ~mode ~limit ~offset =
   try
     let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
-    busy_timeout db 1500;
     let data_queue = Queue.create ~capacity:limit () in
     let sql =
       match mode with

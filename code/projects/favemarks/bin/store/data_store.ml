@@ -64,3 +64,16 @@ let ls ~state =
     Ok state
   | _ -> Error "Internal error: setting the wrong mode."
 ;;
+
+let get_tags () =
+  let ( let* ) = Result.( >>= ) in
+  let* data = with_db_path ~f:(fun db_path -> Db.load_all ~db_path) in
+  let tags =
+    Queue.to_list data
+    |> List.concat_map ~f:(fun x ->
+         x.Model.tags
+         |> String.split ~on:','
+         |> List.map ~f:(fun x -> Common.strip_and_lowercase x))
+  in
+  Set.of_list (module String) tags |> Set.to_list |> Ok
+;;

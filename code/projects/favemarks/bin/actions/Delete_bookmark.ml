@@ -3,9 +3,9 @@ open Common
 open UI_display
 open UI_prompt
 
-let get_key ~msg data =
+let get_key ~msg bookmarks =
   let retry_msg = "Key is not found in the displaying records. Please try again." in
-  let keys = data |> List.map ~f:(fun x -> x.Model.mnemonic) in
+  let keys = bookmarks |> List.map ~f:(fun x -> x.Model.mnemonic) in
   let validate input = validate_fields keys input in
   strip_and_lowercase @@ ask_again_or_default ~validate ~msg ~retry_msg ""
 ;;

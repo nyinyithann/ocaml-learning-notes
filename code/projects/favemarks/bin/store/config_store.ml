@@ -9,12 +9,12 @@ let default_page_size = 12
 let max_page_size = 20
 let cache = Hashtbl.create (module String)
 
-let get_config_path_full =
+let get_config_path_full () =
   Lazy.from_fun (fun () -> Sys_unix.home_directory () ^ config_path)
 ;;
 
 let config_file_exists () =
-  let config_path_full = Lazy.force get_config_path_full in
+  let config_path_full = Lazy.force @@ get_config_path_full () in
   match Sys_unix.file_exists config_path_full with
   | `Yes -> true
   | `No | `Unknown -> false
@@ -24,7 +24,7 @@ let get_config () =
   if config_file_exists ()
   then (
     try
-      In_channel.read_lines @@ Lazy.force get_config_path_full
+      In_channel.read_lines @@ Lazy.force @@ get_config_path_full ()
       |> List.fold ~init:[] ~f:(fun acc x ->
            if String.length x > 0
            then (
@@ -115,7 +115,7 @@ let get_page_size () =
 
 let save_data data =
   try
-    let oc = Out_channel.create ~binary:false (Lazy.force get_config_path_full) in
+    let oc = Out_channel.create ~binary:false (Lazy.force @@ get_config_path_full ()) in
     Out_channel.output_lines oc (data |> List.map ~f:(fun (k, v) -> sprintf "%s=%s\n" k v));
     Out_channel.close oc;
     data |> List.iter ~f:(fun (key, data) -> Hashtbl.set cache ~key ~data);

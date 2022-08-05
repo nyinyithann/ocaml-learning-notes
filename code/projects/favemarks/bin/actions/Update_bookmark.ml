@@ -1,20 +1,20 @@
+open Core
 open Common
 open UI_display
 open UI_prompt
 
-let get_id ~msg data =
-  let open Core in
-  let retry_msg = "id not found in the loaded records. Please try again."
-  and validate input =
+let get_key bookmarks =
+  let msg = "Enter id to update or q to quit: " in
+  let retry_msg = "Key is not found in the displaying records. Please try again." in
+  let keys = bookmarks |> List.map ~f:(fun x -> x.Model.mnemonic) in
+  let validate input =
     let si = strip_and_lowercase input in
-    Queue.exists data ~f:(fun x -> String.(string_of_int x.Model.id = si))
-    || String.(si = "q")
+    validate_fields keys input || String.(si = "q")
   in
-  ask_again_if_invalid ~validate ~msg ~retry_msg ()
+  strip_and_lowercase @@ ask_again_or_default ~validate ~msg ~retry_msg ""
 ;;
 
 let get_modified_url existing_url =
-  let open Core in
   print_noti (sprintf "Existing url: %s" existing_url);
   let msg = "Enter modified url or nothing to skip: "
   and retry_msg = "A valid url must be provided." in
@@ -22,7 +22,6 @@ let get_modified_url existing_url =
 ;;
 
 let get_modified_tags existing_tags =
-  let open Core in
   print_noti (sprintf "Existing tags: %s" existing_tags);
   let msg = "Enter modified tags or nothing to skip: "
   and retry_msg =
@@ -31,40 +30,24 @@ let get_modified_tags existing_tags =
   ask_again_or_default ~validate:validate_tags ~msg ~retry_msg existing_tags
 ;;
 
-let update
-  ?search_field
-  ?search_term
-  ?sort_field
-  ?sort_order
-  ~current_page
-  ~total_count
-  ~search
-  data
-  =
+let update ~go_home ~state =
   new_line ();
-  let id = get_id ~msg:"Enter id to update or q to quit: " data in
-  if Core.String.(id = "q")
-  then ()
+  let bookmarks = State.get_bookmarks state in
+  let key = get_key bookmarks in
+  if String.(key = "q")
+  then go_home ~state
   else (
-    match
-      Core.Queue.find data ~f:(fun x -> String.equal (string_of_int x.Model.id) id)
-    with
-    | Some { Model.url; tags; _ } ->
-      let modified_url = get_modified_url url in
-      let modified_tags = get_modified_tags tags in
-      if Core.String.(modified_url <> url || modified_tags <> tags)
-      then
-        with_console_report ~f:(fun () ->
-          Data_store.update ~id:(int_of_string id) ~url:modified_url ~tags:modified_tags);
-      search
-        ?search_field
-        ?search_term
-        ?sort_field
-        ?sort_order
-        ~current_page
-        ~total_count
-        ()
-    | _ ->
-      print_error_msg
-        (Core.sprintf "Record with id %s is not found in the currently loaded data." id))
+    (match List.find bookmarks ~f:(fun x -> String.(x.Model.mnemonic = key)) with
+     | Some { Model.id; url; tags; _ } ->
+       let modified_url = get_modified_url url in
+       let modified_tags = get_modified_tags tags in
+       if String.(modified_url <> url || modified_tags <> tags)
+       then (
+         match Data_store.update ~id ~url:modified_url ~tags:modified_tags with
+         | Ok s -> State.set_status state @@ Some s
+         | Error e -> State.set_status state @@ Some e)
+     | _ ->
+       State.set_status state
+       @@ Some (Core.sprintf "Record with key %s is not found in the table." key));
+    go_home ~state)
 ;;

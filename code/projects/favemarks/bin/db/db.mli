@@ -22,3 +22,5 @@ val load
   -> limit:int
   -> offset:int
   -> (Model.bookmark Base.Queue.t, string) result
+
+val load_all : db_path:string -> (Model.bookmark Base.Queue.t, string) result

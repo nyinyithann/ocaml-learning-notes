@@ -69,7 +69,10 @@ let ls_command =
          (optional string)
          ~doc:"string one of the fields (url, tags, id, date) to sort against"
      in
-     fun () -> ListSearch_bookmarks.Ls.ls ?sort_field ?sort_order ())
+     fun () ->
+       let sf = Option.value sort_field ~default:"id" in
+       let so = Option.value sort_order ~default:"desc" in
+       ListSearch_bookmarks.Ls.ls ~sort_field:sf ~sort_order:so ())
 ;;
 
 let set_config_command =
@@ -91,6 +94,25 @@ let set_config_command =
      fun () -> Set_config.set ~page_size ~open_with)
 ;;
 
+let info_command =
+  Command.basic
+    ~summary:"show info."
+    (let%map_open.Command config_info =
+       flag
+         ~full_flag_required:()
+         "-config-info"
+         (optional bool)
+         ~doc:"bool configuration info."
+     and tags_info =
+       flag
+         ~full_flag_required:()
+         "-tags-info"
+         (optional bool)
+         ~doc:"bool all the tags stored in database."
+     in
+     fun () -> Display_info.display ?config_info ?tags_info ())
+;;
+
 let cmd_group =
   Command.group
     ~summary:"Your favourite bookmarks at your fingertips."
@@ -98,6 +120,7 @@ let cmd_group =
     ; "search", search_command
     ; "ls", ls_command
     ; "config", set_config_command
+    ; "info", info_command
     ]
 ;;
 

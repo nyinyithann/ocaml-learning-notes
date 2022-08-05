@@ -50,22 +50,17 @@ let show_menu ~state ~ls ~search ~fn_aux () =
   else if Char.(c = 'l')
   then ls ?sort_field:None ?sort_order:None ()
   else if Char.(c = 'u')
-  then
-    (* Update_bookmark.update *)
-    (*   ?search_field *)
-    (*   ?search_term *)
-    (*   ?sort_field *)
-    (*   ?sort_order *)
-    (*   ~current_page *)
-    (*   ~total_count *)
-    (*   ~search *)
-    (*   data *)
-    ()
+  then Update_bookmark.update ~go_home:fn_aux ~state
   else if Char.(c = 'd')
   then Delete_bookmark.delete ~go_home:fn_aux ~state
   else if Char.(c = 'o')
   then (
     State.set_status state @@ Some (Open_bookmark.open_links ~state);
+    fn_aux ~state)
+  else if Char.(c = 'i')
+  then (
+    let msg = Display_info.ask_and_display () in
+    State.set_status state @@ msg;
     fn_aux ~state)
   else if Char.(c = 'q')
   then new_line ()
