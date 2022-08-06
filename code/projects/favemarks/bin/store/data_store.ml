@@ -20,6 +20,8 @@ let update ~id ~url ~tags =
   with_db_path ~f:(fun db_path -> Db.update ~db_path ~id ~url ~tags)
 ;;
 
+let db_new ~path = Db.db_new ~path
+
 let search ~state =
   let mode = State.get_mode state in
   match mode with

@@ -4,7 +4,7 @@ open UI_display
 open UI_prompt
 
 let get_key bookmarks =
-  let msg = "Enter id to update or q to quit: " in
+  let msg = "Enter a key or nothing to skip: " in
   let retry_msg = "Key is not found in the displaying records. Please try again." in
   let keys = bookmarks |> List.map ~f:(fun x -> x.Model.mnemonic) in
   let validate input =

@@ -113,6 +113,32 @@ let info_command =
      fun () -> Display_info.display ?config_info ?tags_info ())
 ;;
 
+let db_new_command =
+  Command.basic
+    ~summary:"create a new database."
+    (let%map_open.Command path =
+       flag
+         ~full_flag_required:()
+         "-path"
+         (required string)
+         ~doc:"string a new Db file path. e.g \"/Users/jazz/fm.db\": "
+     in
+     fun () -> Db_command.db_new ~path)
+;;
+
+let db_switch_command =
+  Command.basic
+    ~summary:"switch to another database."
+    (let%map_open.Command new_path =
+       flag
+         ~full_flag_required:()
+         "-path"
+         (required string)
+         ~doc:"string a new Db file path. e.g \"/Users/jazz/fm.db\": "
+     in
+     fun () -> Db_command.db_switch ~new_path)
+;;
+
 let cmd_group =
   Command.group
     ~summary:"Your favourite bookmarks at your fingertips."
@@ -121,6 +147,8 @@ let cmd_group =
     ; "ls", ls_command
     ; "config", set_config_command
     ; "info", info_command
+    ; "db-new", db_new_command
+    ; "db-switch", db_switch_command
     ]
 ;;
 

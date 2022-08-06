@@ -24,3 +24,4 @@ val load
   -> (Model.bookmark Base.Queue.t, string) result
 
 val load_all : db_path:string -> (Model.bookmark Base.Queue.t, string) result
+val db_new : path:string -> (string, string) result

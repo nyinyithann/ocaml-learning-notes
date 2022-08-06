@@ -193,3 +193,30 @@ let load ~db_path ~mode ~limit ~offset =
   | SqliteError s -> Error s
   | e -> Error (sprintf "db.load: %s." (Exn.to_string e))
 ;;
+
+let db_new ~path =
+  try
+    let db = db_open ~uri:true path in
+    let drop_sql = "DROP TABLE IF EXISTS bookmarks" in
+    let new_sql =
+      "CREATE TABLE bookmarks (id INTEGER PRIMARY KEY ASC AUTOINCREMENT UNIQUE,url \
+       VARCHAR (65536) NOT NULL,tags VARCHAR (65536) NOT NULL,date TEXT)"
+    in
+    let result =
+      match exec db drop_sql with
+      | Rc.OK ->
+        (match exec db new_sql with
+         | Rc.OK -> Ok (sprintf "A new db is created: %s." path)
+         | e -> Error (sprintf "db.db_new: %s. %s." (Rc.to_string e) (errmsg db)))
+      | e -> Error (sprintf "db.db_new: %s. %s." (Rc.to_string e) (errmsg db))
+    in
+    ignore @@ db_close db;
+    result
+  with
+  | SqliteError s -> Error s
+  | e ->
+    Error
+      (sprintf
+         "db.db_new: %s.\nPlease make sure path is valid. e.g. \"/Users/Jazz/fm.db\""
+         (Exn.to_string e))
+;;

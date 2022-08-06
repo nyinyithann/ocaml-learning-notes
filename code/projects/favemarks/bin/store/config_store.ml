@@ -124,6 +124,20 @@ let save_data data =
   | e -> Error (Exn.to_string e)
 ;;
 
+let set_db_filepath ~new_path =
+  if config_file_exists ()
+  then (
+    match get_open_with () with
+    | Ok op ->
+      save_data
+        [ db_path_key, new_path
+        ; page_size_key, string_of_int @@ get_page_size ()
+        ; open_with_key, op
+        ]
+    | Error _ as e -> e)
+  else save_data [ db_path_key, new_path ]
+;;
+
 let set_page_size page_size =
   let page_size = string_of_int page_size in
   if config_file_exists ()
@@ -132,7 +146,8 @@ let set_page_size page_size =
     | Ok dbp, Ok opw ->
       save_data [ db_path_key, dbp; open_with_key, opw; page_size_key, page_size ]
     | Error e1, Error e2 -> Error (e1 ^ e2)
-    | _ -> Error "Error occured at saving config.")
+    | (Error _ as e), _ -> e
+    | _, (Error _ as e) -> e)
   else save_data [ page_size_key, page_size ]
 ;;
 
