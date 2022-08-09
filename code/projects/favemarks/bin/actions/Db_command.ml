@@ -9,6 +9,6 @@ let db_new ~path =
 
 let db_switch ~new_path =
   match Config_store.set_db_filepath ~new_path with
-  | Ok s -> print_ok_msg s
+  | Ok _ -> print_ok_msg @@ sprintf "Db is switched to %s" new_path
   | Error e -> print_error_msg e
 ;;

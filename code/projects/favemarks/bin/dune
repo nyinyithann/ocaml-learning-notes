@@ -2,8 +2,8 @@
  (name main)
  (public_name fm)
  (package fm)
- (libraries core_compat sqlite3 ANSITerminal re unix textutils.ascii_table)
- (preprocess (pps ppx_jane)))
+ (libraries core_compat sqlite3 ANSITerminal re unix textutils.ascii_table yojson tyxml)
+ (preprocess (pps ppx_jane ppx_deriving_yojson)))
 
 (include_subdirs unqualified)
 (env

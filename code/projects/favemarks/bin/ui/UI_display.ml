@@ -2,6 +2,8 @@ open Core
 module T = ANSITerminal
 
 let new_line () = printf "\n%!"
+let with_error_style msg = T.sprintf [ T.Foreground T.Red ] "%s" msg
+let with_ok_style msg = T.sprintf [ T.Foreground T.Green ] "%s" msg
 
 let print_ok_msg msg = T.print_string [ T.Foreground T.Green ] (sprintf "\n✅  %s\n%!" msg)
 
@@ -67,7 +69,7 @@ let show_status_info ~state =
   in
   let status_msg =
     match status with
-    | Some s -> T.sprintf [ T.Foreground T.Green ] "\n[%s]" s
+    | Some s -> sprintf "\n[%s]" s
     | None -> ""
   in
   T.print_string

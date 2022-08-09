@@ -19,8 +19,8 @@ let show_menu ~state ~ls ~search ~fn_aux () =
               "");
     Queue.enqueue menu_text @@ Buffer.contents buffer
   in
-  add_prompt_msg [ "Add", "a"; "Search", "s"; "Next", "j"; "Quit", "q" ];
-  add_prompt_msg [ "Update", "u"; "List", "l"; "Previous", "k" ];
+  add_prompt_msg [ "Add", "a"; "Search", "s"; "Next", "j"; "Export", "e" ];
+  add_prompt_msg [ "Update", "u"; "List", "l"; "Previous", "k"; "Quit", "q" ];
   add_prompt_msg [ "Delete", "d"; "Open", "o"; "Info", "i" ];
   print_lines @@ Queue.to_list menu_text;
   new_line ();
@@ -62,6 +62,8 @@ let show_menu ~state ~ls ~search ~fn_aux () =
     let msg = Display_info.ask_and_display () in
     State.set_status state @@ msg;
     fn_aux ~state)
+  else if Char.(c = 'e')
+  then Export_bookmarks.export ~go_home:fn_aux ~state
   else if Char.(c = 'q')
   then new_line ()
   else fn_aux ~state

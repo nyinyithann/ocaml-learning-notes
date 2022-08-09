@@ -1,4 +1,5 @@
 open Core
+module T = ANSITerminal
 
 let is_whitespace s = s |> String.strip |> String.is_empty
 let strip_and_lowercase s = String.(lowercase @@ strip s)
@@ -6,8 +7,8 @@ let epoch_str () = Time_unix.to_string Time_unix.epoch
 
 let result_to_msg_opt (r : (string, string) result) =
   match r with
-  | Ok s -> Some s
-  | Error e -> Some e
+  | Ok s -> Some (T.sprintf [ T.Foreground T.Green ] "%s" s)
+  | Error e -> Some (T.sprintf [ T.Foreground T.Red ] "%s" e)
 ;;
 
 let time_of_string str =

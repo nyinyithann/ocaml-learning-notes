@@ -52,7 +52,6 @@ let get_links data =
   !r
 ;;
 
-(* exit 255 means the command could not be executed. It's not Unix's standard convention. *)
 let open_url url cin cout =
   let link =
     if String.(is_prefix ~prefix:"http://" url || is_prefix ~prefix:"https://" url)
@@ -106,25 +105,30 @@ let open_links ~state =
       (match status with
        | WEXITED n when n > 130 ->
          let s =
-           sprintf "Error at opening %s. %s." l @@ Caml.really_input_string cin (n - 130)
+           (* in_channel_length throws Illagle_seek error. Hence, work around it *)
+           UI_display.with_error_style
+           @@ sprintf "Error at opening %s. %s." l
+           @@ Caml.really_input_string cin (n - 130)
          in
          In_channel.close cin;
          s
        | WEXITED n ->
          In_channel.close cin;
-         sprintf
-           "%s is opened%s."
-           l
-           (sprintf " in %s"
-           @@ Option.value ~default:""
-           @@ Result.ok
-           @@ Config_store.get_open_with ())
+
+         UI_display.with_error_style
+         @@ sprintf
+              "%s is opened%s."
+              l
+              (sprintf " in %s"
+              @@ Option.value ~default:""
+              @@ Result.ok
+              @@ Config_store.get_open_with ())
        | WSIGNALED signal ->
          In_channel.close cin;
-         sprintf "browser is killed by signal %d." signal
+         UI_display.with_error_style @@ sprintf "browser is killed by signal %d." signal
        | WSTOPPED _ ->
          In_channel.close cin;
-         sprintf "browser stopped.")
+         UI_display.with_error_style @@ sprintf "browser stopped.")
   in
   let fork_open ls =
     let rec loop ls acc =
