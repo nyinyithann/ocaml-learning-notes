@@ -7,9 +7,7 @@ let get_key bookmarks =
   let msg = "Enter a key or nothing to skip: " in
   let retry_msg = "Key is not found in the displaying records. Please try again." in
   let keys = bookmarks |> List.map ~f:(fun x -> x.Model.mnemonic) in
-  let validate input =
-    let si = strip_and_lowercase input in
-    validate_fields keys input || String.(si = "q")
+  let validate input = validate_fields keys input 
   in
   strip_and_lowercase @@ ask_again_or_default ~validate ~msg ~retry_msg ""
 ;;
@@ -34,8 +32,11 @@ let update ~go_home ~state =
   new_line ();
   let bookmarks = State.get_bookmarks state in
   let key = get_key bookmarks in
-  if String.(key = "q")
-  then go_home ~state
+  if String.(key = "")
+  then (
+      State.set_status state None;
+      go_home ~state
+  )
   else (
     (match List.find bookmarks ~f:(fun x -> String.(x.Model.mnemonic = key)) with
      | Some { Model.id; url; tags; _ } ->
@@ -48,6 +49,6 @@ let update ~go_home ~state =
          | Error e -> State.set_status state @@ Some e)
      | _ ->
        State.set_status state
-       @@ Some (Core.sprintf "Record with key %s is not found in the table." key));
+       @@ Some (with_error_style @@ sprintf "Record with key %s is not found in the table." key));
     go_home ~state)
 ;;

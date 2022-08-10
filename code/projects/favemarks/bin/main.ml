@@ -141,7 +141,7 @@ let db_switch_command =
 
 let cmd_group =
   Command.group
-    ~summary:"Your favourite bookmarks at your fingertips."
+    ~summary:"Your favourite bookmarks at your fingertips"
     [ "add", add_command
     ; "search", search_command
     ; "ls", ls_command

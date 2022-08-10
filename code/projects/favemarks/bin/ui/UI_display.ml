@@ -25,7 +25,7 @@ let show_title () =
   T.set_cursor 0 0;
   T.print_string
     [ T.Foreground T.Green; T.Bold ]
-    (sprintf "\n☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips.\n")
+    (sprintf "\n☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips\n")
 ;;
 
 let show_status_info ~state =
