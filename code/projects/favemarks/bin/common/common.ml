@@ -83,6 +83,12 @@ let get_os_type () =
   else Error "The OS is not supported."
 ;;
 
+let normalize_url url =
+  if String.(is_prefix ~prefix:"http://" url || is_prefix ~prefix:"https://" url)
+  then url
+  else "https://" ^ url
+;;
+
 module Browser = struct
   let chrome_key = "Chrome"
   let safari_key = "Safari"
@@ -129,7 +135,7 @@ module Browser = struct
 
   let get_browser_name key =
     match
-      mac_browsers |> List.find ~f:(fun (k, v) -> String.(lowercase key = lowercase k))
+      mac_browsers |> List.find ~f:(fun (k, _) -> String.(lowercase key = lowercase k))
     with
     | Some (_, n) -> Ok n
     | None -> Error (sprintf "%s browser not found" key)

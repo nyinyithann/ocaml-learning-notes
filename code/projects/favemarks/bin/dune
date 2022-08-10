@@ -6,6 +6,6 @@
  (preprocess (pps ppx_jane ppx_deriving_yojson)))
 
 (include_subdirs unqualified)
-(env
-  (dev
-    (flags (:standard -w -27 -w -69))))
+; (env
+;   (dev
+;     (flags (:standard -w -27 -w -69))))

@@ -143,7 +143,7 @@ let load_all ~db_path =
 let load ~db_path ~mode ~limit ~offset =
   try
     let db = db_open ~mode:`NO_CREATE ~uri:true db_path in
-    let data_queue = Queue.create ~capacity:limit () in
+    let data_queue = Queue.create () in
     let sql =
       match mode with
       | Model.List { sort_field; sort_order } ->
@@ -166,10 +166,6 @@ let load ~db_path ~mode ~limit ~offset =
           limit
           offset
     in
-    let idx = ref 0 in
-    let mnemonics =
-      Array.init 26 ~f:(fun x -> String.of_char @@ Char.of_int_exn (x + 97))
-    in
     let stmt = prepare db sql in
     while Poly.(step stmt = Rc.ROW) do
       let id = column_int stmt 0
@@ -178,13 +174,7 @@ let load ~db_path ~mode ~limit ~offset =
       and date = column_text stmt 3 in
       Queue.enqueue
         data_queue
-        { Model.id
-        ; mnemonic = mnemonics.(!idx)
-        ; url
-        ; tags
-        ; date = Common.time_of_string date
-        };
-      incr idx
+        { Model.id; mnemonic = ""; url; tags; date = Common.time_of_string date }
     done;
     ignore @@ finalize stmt;
     ignore @@ db_close db;

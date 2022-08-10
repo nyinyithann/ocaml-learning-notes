@@ -52,12 +52,8 @@ let get_links data =
   !r
 ;;
 
-let open_url url cin cout =
-  let link =
-    if String.(is_prefix ~prefix:"http://" url || is_prefix ~prefix:"https://" url)
-    then url
-    else "https://" ^ url
-  in
+let open_url url cout =
+  let link = Common.normalize_url url in
   (* Unix exit code min =0 max=255 *)
   (* in_channel_length throws Illagle_seek error. Hence, work around it *)
   let get_exit_code n = 130 + if n > 120 then 120 else n in
@@ -99,7 +95,7 @@ let open_links ~state =
     let cin = in_channel_of_descr fd_in in
     let cout = out_channel_of_descr fd_out in
     match fork () with
-    | 0 -> open_url l cin cout
+    | 0 -> open_url l cout
     | _ ->
       let _, status = wait () in
       (match status with
@@ -112,10 +108,9 @@ let open_links ~state =
          in
          In_channel.close cin;
          s
-       | WEXITED n ->
+       | WEXITED _ ->
          In_channel.close cin;
-
-         UI_display.with_error_style
+         UI_display.with_ok_style
          @@ sprintf
               "%s is opened%s."
               l

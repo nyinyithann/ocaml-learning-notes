@@ -22,10 +22,30 @@ let update ~id ~url ~tags =
 
 let db_new ~path = Db.db_new ~path
 
+let get_bookmarks_without_pagination ~state =
+  let ( let* ) = Result.( >>= ) in
+  let* mode = Result.of_option (State.get_mode state) ~error:"Invalid Mode" in
+  let* data =
+    with_db_path ~f:(fun db_path -> Db.load ~db_path ~mode ~limit:Int.max_value ~offset:0)
+  in
+  Ok (Queue.to_list data)
+;;
+
+let with_mnemonic data =
+  let mnemonic_count = 26 in
+  let mnemonics =
+    Array.init mnemonic_count ~f:(fun x -> String.of_char @@ Char.of_int_exn (x + 97))
+  in
+  data
+  |> Queue.to_list
+  |> List.mapi ~f:(fun i x ->
+       { x with Model.mnemonic = (if i < mnemonic_count then mnemonics.(i) else "") })
+;;
+
 let search ~state =
   let mode = State.get_mode state in
   match mode with
-  | Some (Model.Search { search_field; search_term; sort_field; sort_order } as mode) ->
+  | Some (Model.Search { search_field; search_term; _ } as mode) ->
     let ( let* ) = Result.( >>= ) in
     let* total_count = get_total_count () in
     let* search_count = get_search_total_count ~search_field ~search_term in
@@ -36,7 +56,7 @@ let search ~state =
     in
     State.set_total_count state total_count;
     State.set_search_count state (Some search_count);
-    State.set_bookmarks state (Queue.to_list data);
+    State.set_bookmarks state (with_mnemonic data);
     State.set_total_pages
       state
       (Float.to_int
@@ -48,7 +68,7 @@ let search ~state =
 let ls ~state =
   let mode = State.get_mode state in
   match mode with
-  | Some (Model.List { sort_field; sort_order } as mode) ->
+  | Some (Model.List _ as mode) ->
     let ( let* ) = Result.( >>= ) in
     let* total_count = get_total_count () in
     let page_size = State.get_page_size state in
@@ -58,7 +78,7 @@ let ls ~state =
     in
     State.set_total_count state total_count;
     State.set_search_count state None;
-    State.set_bookmarks state (Queue.to_list data);
+    State.set_bookmarks state (with_mnemonic data);
     State.set_total_pages
       state
       (Float.to_int
