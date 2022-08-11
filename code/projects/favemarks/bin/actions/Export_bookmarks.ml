@@ -15,8 +15,8 @@ let get_path ~format =
   let msg = "Enter a file path to export: "
   and retry_msg =
     sprintf
-      "File path should be valid. e.g. /Users/jazz/export.%s. Please provide a valid \
-       file path."
+      "File path should be valid. Please make sure to provide file extension in the file \
+       path. (e.g. /Users/jazz/export.%s)"
       format
   and validate input =
     (Filename.is_absolute input || Filename.is_relative input)

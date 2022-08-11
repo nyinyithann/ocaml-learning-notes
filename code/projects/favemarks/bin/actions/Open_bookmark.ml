@@ -75,7 +75,7 @@ let open_url url cout =
            exit (get_exit_code (String.length e))
        with
       | Caml_unix.Unix_error (err, _, _) ->
-        let e = "dddkjl" ^ Caml_unix.error_message err in
+        let e =  Caml_unix.error_message err in
         Out_channel.output_string cout e;
         Out_channel.close cout;
         exit (get_exit_code (String.length e)))

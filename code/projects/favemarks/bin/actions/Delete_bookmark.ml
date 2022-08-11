@@ -5,7 +5,7 @@ open UI_prompt
 
 let confirm () =
   let msg = "Are you sure to delete (yes or n)? " in
-  let retry_msg = "Please entry \'yes\' or \'n\': " in
+  let retry_msg = "Please enter \'yes\' or \'n\': " in
   let validate input =
     let si = strip_and_lowercase input in
     String.(si = "yes" || si = "n")
@@ -31,8 +31,8 @@ let delete ~go_home ~state =
     if confirm ()
     then (
       match Data_store.delete ~id:r.Model.id with
-      | Ok s -> State.set_status state @@ Some (sprintf "%s, %s." s r.url)
-      | Error e -> State.set_status state @@ Some e)
+      | Ok s -> State.set_status state @@ Some (with_ok_style @@ sprintf "%s, %s." s r.url)
+      | Error e -> State.set_status state @@ Some (with_error_style e))
     else State.set_status state None;
 
     go_home ~state)

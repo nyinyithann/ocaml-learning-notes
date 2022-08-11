@@ -3,7 +3,7 @@ open Core_compat
 
 let add_command =
   Command.basic
-    ~summary:"add a bookmark."
+    ~summary:"add a bookmark"
     (let%map_open.Command url =
        flag ~full_flag_required:() "-url" (optional string) ~doc:"string url to save"
      and tags =
@@ -18,7 +18,7 @@ let add_command =
 
 let search_command =
   Command.basic
-    ~summary:"search bookmarks."
+    ~summary:"search bookmarks"
     (let%map_open.Command sort_order =
        flag
          ~full_flag_required:()
@@ -55,7 +55,7 @@ let search_command =
 
 let ls_command =
   Command.basic
-    ~summary:"list bookmarks."
+    ~summary:"list bookmarks"
     (let%map_open.Command sort_order =
        flag
          ~full_flag_required:()
@@ -77,7 +77,7 @@ let ls_command =
 
 let set_config_command =
   Command.basic
-    ~summary:"set config."
+    ~summary:"set config"
     (let%map_open.Command page_size =
        flag
          ~full_flag_required:()
@@ -96,7 +96,7 @@ let set_config_command =
 
 let info_command =
   Command.basic
-    ~summary:"show info."
+    ~summary:"show info"
     (let%map_open.Command config_info =
        flag
          ~full_flag_required:()
@@ -115,7 +115,7 @@ let info_command =
 
 let db_new_command =
   Command.basic
-    ~summary:"create a new database."
+    ~summary:"create a new database"
     (let%map_open.Command path =
        flag
          ~full_flag_required:()
@@ -128,7 +128,7 @@ let db_new_command =
 
 let db_switch_command =
   Command.basic
-    ~summary:"switch to another database."
+    ~summary:"switch to another database"
     (let%map_open.Command new_path =
        flag
          ~full_flag_required:()

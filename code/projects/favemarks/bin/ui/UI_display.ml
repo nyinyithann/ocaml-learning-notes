@@ -25,7 +25,7 @@ let show_title () =
   T.set_cursor 0 0;
   T.print_string
     [ T.Foreground T.Green; T.Bold ]
-    (sprintf "\n☘️ %s" "Favemarks: Your favourite bookmarks at your fingertips\n")
+    "⚡︎Favemarks: Your favourite bookmarks at your fingertips\n"
 ;;
 
 let show_status_info ~state =
@@ -38,29 +38,28 @@ let show_status_info ~state =
 
   let current_page_status =
     sprintf
-      "[Page %d/%d]"
+      "⚑ Page %d/%d"
       (if current_page < total_pages then current_page + 1 else current_page)
       total_pages
   in
   let total_search_count_status =
     match total_search_count with
-    | Some x -> sprintf "[Total found in search: %d]" x
+    | Some x -> sprintf "⚑ Total found in search: %d" x
     | None -> ""
   in
-  let total_count_status = sprintf "[Total in database: %d]" total_count in
+  let total_count_status = sprintf "⚑ Total in database: %d" total_count in
   let mode_status =
     match mode with
     | Some x ->
       (match x with
        | Model.List { sort_field; sort_order } ->
          sprintf
-           "[Listed all by \'%s\' order, by \'%s\' column.]"
+           "⚑ Listed all in \'%s\' order, by \'%s\' column."
            (Option.value sort_order ~default:"")
            (Option.value sort_field ~default:"")
        | Model.Search { search_term; search_field; sort_field; sort_order } ->
          sprintf
-           "[Searched \'%s\' in \'%s\' column(s). Sorted by \'%s\' order, by \'%s\' \
-            column.]"
+           "⚑ Searched \'%s\' in \'%s\'. Sorted by \'%s\' order, by \'%s\' column."
            search_term
            search_field
            (Option.value sort_order ~default:"")
@@ -69,7 +68,7 @@ let show_status_info ~state =
   in
   let status_msg =
     match status with
-    | Some s -> sprintf "\n[%s]" s
+    | Some s -> sprintf "\n%s %s" (with_ok_style "♨︎") s
     | None -> ""
   in
   T.print_string

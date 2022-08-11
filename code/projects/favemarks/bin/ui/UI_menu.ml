@@ -11,10 +11,10 @@ let show_menu ~state ~ls ~search ~fn_aux () =
     l
     |> List.iter ~f:(fun (title, key) ->
          Buffer.add_string buffer
-         @@ T.sprintf
-              [ T.Foreground T.Cyan ]
-              "⊜ %-8s:%s%4s"
-              title
+         @@ sprintf
+              "%s %s:%s%4s"
+              (T.sprintf [ T.Foreground T.Blue ] "%s" "●")
+              (T.sprintf [ T.Foreground T.Cyan ] "%-8s" title)
               (T.sprintf [ T.Foreground T.Blue ] "%2s" key)
               "");
     Queue.enqueue menu_text @@ Buffer.contents buffer
@@ -24,7 +24,8 @@ let show_menu ~state ~ls ~search ~fn_aux () =
   add_prompt_msg [ "Delete", "d"; "Open", "o"; "Info", "i" ];
   print_lines @@ Queue.to_list menu_text;
   new_line ();
-  ask_input "Your choice: ";
+  T.print_string [ T.Foreground T.Green ] "⚡︎Your choice: ";
+  printf "%!";
   let c = Char.lowercase (get_one_char ()) in
 
   let current_page = State.get_current_page state in

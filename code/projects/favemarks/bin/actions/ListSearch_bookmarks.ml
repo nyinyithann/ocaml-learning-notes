@@ -11,9 +11,9 @@ module rec Ls : sig
 end = struct
   let get_sort_field v =
     let msg =
-      {|Enter sort field ('id', 'url', 'tags', 'date') or nothing to use the default value 'id': |}
+      {|Enter sort field 'id', 'url', 'tags', or 'date' (empty to use the default value 'id'): |}
     and retry_msg =
-      {|Sort field should be either one of 'id', 'url', 'tags', 'date', or enter nothing to use the deault value 'id'.|}
+      {|Sort field should be either one of 'id', 'url', 'tags', or 'date' (empty to use the deault value 'id').|}
     and validate input = validate_fields [ "id"; "url"; "tags"; "date" ] input in
     (match v with
      | None -> Some (ask_again_or_default ~validate ~msg ~retry_msg "id")
@@ -26,9 +26,9 @@ end = struct
 
   let get_sort_order v =
     let msg =
-      {|Enter sort order ('asc' or 'desc') or nothing to use the default value 'desc': |}
+      {|Enter sort order 'asc' or 'desc' (empty to use the default value 'desc'): |}
     and retry_msg =
-      {|Sort order should be either one of 'asc', 'desc", or enter nothing to use the default value 'desc'.|}
+      {|Sort order should be either one of 'asc' or 'desc" (empty to use the default value 'desc').|}
     and validate input = validate_fields [ "asc"; "desc" ] input in
     (match v with
      | None -> Some (ask_again_or_default ~validate ~msg ~retry_msg "desc")
@@ -67,9 +67,9 @@ and Search : sig
 end = struct
   let get_search_field v =
     let msg =
-      {|Enter search field ('id', 'url', 'tags'), or nothing to search in all columns: |}
+      {|Enter search field 'id', 'url', or 'tags' (empty to search in all columns): |}
     and retry_msg =
-      {|Search field should be either one of  'id', 'url', 'tags', or enter nothing to search in all columns.|}
+      {|Search field should be either one of  'id', 'url', or 'tags' (empty to search in all columns).|}
     and validate input = validate_fields [ "id"; "url"; "tags"; "all" ] input in
     (match v with
      | None -> ask_again_or_default ~validate ~msg ~retry_msg "id, url, tags"

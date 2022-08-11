@@ -4,24 +4,23 @@ open UI_display
 open UI_prompt
 
 let get_key bookmarks =
-  let msg = "Enter a key or nothing to skip: " in
+  let msg = "Enter a key (empty to skip): " in
   let retry_msg = "Key is not found in the displaying records. Please try again." in
   let keys = bookmarks |> List.map ~f:(fun x -> x.Model.mnemonic) in
-  let validate input = validate_fields keys input 
-  in
+  let validate input = validate_fields keys input in
   strip_and_lowercase @@ ask_again_or_default ~validate ~msg ~retry_msg ""
 ;;
 
 let get_modified_url existing_url =
   print_noti (sprintf "Existing url: %s" existing_url);
-  let msg = "Enter modified url or nothing to skip: "
+  let msg = "Enter a url (empty to skip): "
   and retry_msg = "A valid url must be provided." in
   ask_again_or_default ~validate:validate_url ~msg ~retry_msg existing_url
 ;;
 
 let get_modified_tags existing_tags =
   print_noti (sprintf "Existing tags: %s" existing_tags);
-  let msg = "Enter modified tags or nothing to skip: "
+  let msg = "Enter comma-delimited tags (empty to skip): "
   and retry_msg =
     "One or more comma-delimited tags must be provided. Tags should not have space."
   in
@@ -34,9 +33,8 @@ let update ~go_home ~state =
   let key = get_key bookmarks in
   if String.(key = "")
   then (
-      State.set_status state None;
-      go_home ~state
-  )
+    State.set_status state None;
+    go_home ~state)
   else (
     (match List.find bookmarks ~f:(fun x -> String.(x.Model.mnemonic = key)) with
      | Some { Model.id; url; tags; _ } ->
@@ -45,10 +43,12 @@ let update ~go_home ~state =
        if String.(modified_url <> url || modified_tags <> tags)
        then (
          match Data_store.update ~id ~url:modified_url ~tags:modified_tags with
-         | Ok s -> State.set_status state @@ Some s
-         | Error e -> State.set_status state @@ Some e)
+         | Ok s -> State.set_status state @@ Some (with_ok_style s)
+         | Error e -> State.set_status state @@ Some (with_error_style e))
      | _ ->
        State.set_status state
-       @@ Some (with_error_style @@ sprintf "Record with key %s is not found in the table." key));
+       @@ Some
+            (with_error_style
+            @@ sprintf "Record with key %s is not found in the table." key));
     go_home ~state)
 ;;

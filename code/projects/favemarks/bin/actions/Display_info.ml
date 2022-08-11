@@ -22,7 +22,8 @@ let get_title title =
 
 let get_sub_info title value =
   sprintf
-    "🟢 %s » %s\n%!"
+    "%s %s » %s\n%!"
+    (T.sprintf [ T.Foreground T.Green ] "%s" "●")
     (T.sprintf [ T.Foreground T.Green ] "%s" title)
     (T.sprintf [ T.Foreground T.Cyan ] "%s" value)
 ;;
@@ -33,26 +34,20 @@ let get_config_info (config_path, db_path, browser, page_size) =
     (get_title "Configuration Info")
     (get_sub_info "Config file path" config_path)
     (get_sub_info "Db file path" db_path)
-    (get_sub_info "Browser to open links" browser)
-    (get_sub_info "Page size" @@ string_of_int page_size)
+    (get_sub_info "Browser to open url" browser)
+    (get_sub_info "Display records per page" @@ string_of_int page_size)
 ;;
 
 let get_tags_info ls =
   sprintf
     "\n%s %s"
     (get_title "Tags")
-    (T.sprintf [ T.Foreground T.Cyan ] "%s\n" (String.concat ~sep:" " ls))
+    (T.sprintf [ T.Foreground T.Green ] "%s\n" (String.concat ~sep:" " ls))
 ;;
 
 let yes_or_no input =
   let si = strip_and_lowercase input in
   String.(si = "y" || si = "n")
-;;
-
-let will_show_configs () =
-  let msg = "Do you want to see config values (y/n)? " in
-  let retry_msg = "Please enter \'y\' or \'n\': " in
-  strip_and_lowercase @@ ask_again_if_invalid ~validate:yes_or_no ~msg ~retry_msg ()
 ;;
 
 let will_show_tags () =
@@ -63,17 +58,13 @@ let will_show_tags () =
 
 let ask_and_display () =
   new_line ();
-  let c = will_show_configs () in
   let t = will_show_tags () in
   let r =
     sprintf
       "%s%s"
-      (if String.(c = "y")
-      then (
-        match get_config_values () with
-        | Ok s -> sprintf "%s" @@ get_config_info s
-        | Error e -> sprintf "%s" e)
-      else "")
+      (match get_config_values () with
+       | Ok s -> sprintf "%s" @@ get_config_info s
+       | Error e -> sprintf "%s" e)
       (if String.(t = "y")
       then (
         match Data_store.get_tags () with
@@ -85,7 +76,7 @@ let ask_and_display () =
 ;;
 
 let display ?config_info ?tags_info () =
-  if Option.value config_info ~default:false
+  if Option.value config_info ~default:true
   then (
     match get_config_values () with
     | Ok c -> printf "%s" @@ get_config_info c
