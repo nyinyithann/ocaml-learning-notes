@@ -54,8 +54,8 @@ let validate_tags tags =
      @@ String.(
           split tags ~on:','
           |> List.exists ~f:(fun x ->
-               let sx = strip x in
-               sx = "" || exists sx ~f:Char.is_whitespace)))
+                 let sx = strip x in
+                 sx = "" || exists sx ~f:Char.is_whitespace)))
 ;;
 
 let validate_fields fields input =
@@ -105,6 +105,9 @@ module Browser = struct
     ]
   ;;
 
+  (* Just a name *)
+  let other_os_default_browser = "Default Browser"
+
   let mac_browser_keys =
     sprintf "%s, %s, %s, %s, %s" chrome_key safari_key edge_key firefox_key brave_key
   ;;
@@ -122,22 +125,23 @@ module Browser = struct
   let get_browser_keys () =
     match get_os_type () with
     | Ok `MacOS -> mac_browser_keys
-    | Ok `Linux -> mac_browser_keys (* todo: to implement for Linux *)
+    | Ok `Linux -> other_os_default_browser
     | _ -> ""
   ;;
 
   let get_browser_key_list () =
     match get_os_type () with
     | Ok `MacOS -> mac_browser_key_list
-    | Ok `Linux -> mac_browser_key_list (* todo: to implement for Linux *)
+    | Ok `Linux -> [ other_os_default_browser ]
     | _ -> []
   ;;
 
   let get_browser_name key =
     match
-      mac_browsers |> List.find ~f:(fun (k, _) -> String.(lowercase key = lowercase k))
+      (other_os_default_browser, other_os_default_browser) :: mac_browsers
+      |> List.find ~f:(fun (k, _) -> String.(lowercase key = lowercase k))
     with
     | Some (_, n) -> Ok n
-    | None -> Error (sprintf "%s browser not found" key)
+    | None -> Error (sprintf "%s is not found." key)
   ;;
 end

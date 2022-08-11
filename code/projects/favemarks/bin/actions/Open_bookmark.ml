@@ -34,7 +34,7 @@ let get_links data =
                ~f:(fun x acc ->
                  match
                    List.find data ~f:(fun y ->
-                     String.(y.Model.mnemonic = strip_and_lowercase x))
+                       String.(y.Model.mnemonic = strip_and_lowercase x))
                  with
                  | Some d -> d.Model.url :: acc
                  | None -> acc)
@@ -60,20 +60,29 @@ let open_url url cout =
   match Config_store.get_open_with () with
   | Ok open_with ->
     (match Browser.get_browser_name open_with with
-     | Ok bn ->
-       (try
-          Out_channel.close cout;
-          Caml_unix.execvp "open" [| "open"; "-a"; bn; link |]
-        with
-        | Caml_unix.Unix_error (err, _, _) ->
-          let e = Caml_unix.error_message err in
-          Out_channel.output_string cout e;
-          Out_channel.close cout;
-          exit (get_exit_code (String.length e)))
-     | Error e ->
-       Out_channel.output_string cout e;
-       Out_channel.close cout;
-       exit (get_exit_code (String.length e)))
+    | Ok bn ->
+      (try
+         match get_os_type () with
+         | Ok `Linux ->
+           Out_channel.close cout;
+           Caml_unix.execvp "open" [| "open"; link |]
+         | Ok `MacOS ->
+           Out_channel.close cout;
+           Caml_unix.execvp "open" [| "open"; "-a"; bn; link |]
+         | Error e ->
+           Out_channel.output_string cout e;
+           Out_channel.close cout;
+           exit (get_exit_code (String.length e))
+       with
+      | Caml_unix.Unix_error (err, _, _) ->
+        let e = "dddkjl" ^ Caml_unix.error_message err in
+        Out_channel.output_string cout e;
+        Out_channel.close cout;
+        exit (get_exit_code (String.length e)))
+    | Error e ->
+      Out_channel.output_string cout e;
+      Out_channel.close cout;
+      exit (get_exit_code (String.length e)))
   | Error e ->
     Out_channel.output_string cout e;
     Out_channel.close cout;
@@ -99,31 +108,36 @@ let open_links ~state =
     | _ ->
       let _, status = wait () in
       (match status with
-       | WEXITED n when n > 130 ->
-         let s =
-           (* in_channel_length throws Illagle_seek error. Hence, work around it *)
-           UI_display.with_error_style
-           @@ sprintf "Error at opening %s. %s." l
-           @@ Caml.really_input_string cin (n - 130)
-         in
-         In_channel.close cin;
-         s
-       | WEXITED _ ->
-         In_channel.close cin;
-         UI_display.with_ok_style
-         @@ sprintf
-              "%s is opened%s."
-              l
-              (sprintf " in %s"
-              @@ Option.value ~default:""
-              @@ Result.ok
-              @@ Config_store.get_open_with ())
-       | WSIGNALED signal ->
-         In_channel.close cin;
-         UI_display.with_error_style @@ sprintf "browser is killed by signal %d." signal
-       | WSTOPPED _ ->
-         In_channel.close cin;
-         UI_display.with_error_style @@ sprintf "browser stopped.")
+      | WEXITED n when n > 130 ->
+        let s =
+          (* in_channel_length throws Illagle_seek error. Hence, work around it *)
+          UI_display.with_error_style
+          @@ sprintf "Error at opening %s. %s." l
+          @@ Caml.really_input_string cin (n - 130)
+        in
+        In_channel.close cin;
+        s
+      | WEXITED n ->
+        In_channel.close cin;
+        if n = 0
+        then
+          UI_display.with_ok_style
+          @@ sprintf
+               "%s is opened%s."
+               l
+               (sprintf " in %s"
+               @@ Option.value ~default:""
+               @@ Result.ok
+               @@ Config_store.get_open_with ())
+        else
+          UI_display.with_error_style
+          @@ sprintf "Opening %s ended up with error code %d." l n
+      | WSIGNALED signal ->
+        In_channel.close cin;
+        UI_display.with_error_style @@ sprintf "browser is killed by signal %d." signal
+      | WSTOPPED _ ->
+        In_channel.close cin;
+        UI_display.with_error_style @@ sprintf "browser stopped.")
   in
   let fork_open ls =
     let rec loop ls acc =

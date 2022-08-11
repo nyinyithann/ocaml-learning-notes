@@ -8,8 +8,8 @@ let get_page_size v =
   and retry_msg = "Page size should be between 1 and 20 inclusive"
   and validate input =
     (match int_of_string_opt (String.strip input) with
-     | Some x when x > 0 && x < 21 -> true
-     | _ -> false)
+    | Some x when x > 0 && x < 21 -> true
+    | _ -> false)
     || String.(input = "")
   in
   match v with
@@ -51,9 +51,13 @@ let set_open_with open_with =
 
 let set ~page_size ~open_with =
   (match get_page_size page_size with
-   | None | Some "" -> ()
-   | Some ps -> set_page_size @@ int_of_string ps);
-  match get_open_with open_with with
   | None | Some "" -> ()
-  | Some ow -> set_open_with ow
+  | Some ps -> set_page_size @@ int_of_string ps);
+
+  match get_os_type () with
+  | Ok `MacOS ->
+    (match get_open_with open_with with
+    | None | Some "" -> ()
+    | Some ow -> set_open_with ow)
+  | _ -> ()
 ;;
