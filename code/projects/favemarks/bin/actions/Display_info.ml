@@ -17,7 +17,7 @@ let get_title title =
   sprintf
     " %s\n %s\n"
     (T.sprintf [ T.Foreground T.Green ] "%s" title)
-    (T.sprintf [ T.Foreground T.Green ] "%s" (String.make (String.length title) '='))
+    (T.sprintf [ T.Foreground T.Green ] "%s" (String.make (String.length title) '-'))
 ;;
 
 let get_sub_info title value =
