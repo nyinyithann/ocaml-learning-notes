@@ -23,9 +23,10 @@ let print_lines l = l |> List.iter ~f:(printf "%s\n%!")
 let show_title () =
   T.erase T.Screen;
   T.set_cursor 0 0;
+  T.erase T.Screen;
   T.print_string
     [ T.Foreground T.Green; T.Bold ]
-    "⚡︎Favemarks: Your favourite bookmarks at your fingertips\n"
+    "\n⚡︎Favemarks: Your favourite bookmarks at your fingertips\n"
 ;;
 
 let show_status_info ~state =
