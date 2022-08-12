@@ -93,23 +93,30 @@ let set_config_command =
      fun () -> Set_config.set ~page_size ~open_with)
 ;;
 
-let info_command =
+let tags_info_command =
   Command.basic
-    ~summary:"show info"
-    (let%map_open.Command config_info =
-       flag
-         ~full_flag_required:()
-         "-config-info"
-         (optional bool)
-         ~doc:"bool configuration info."
-     and tags_info =
+    ~summary:"show all tags"
+    (let%map_open.Command _ =
        flag
          ~full_flag_required:()
          "-tags-info"
          (optional bool)
          ~doc:"bool all the tags stored in database."
      in
-     fun () -> Display_info.display ?config_info ?tags_info ())
+     fun () -> Display_info.display_tags ())
+;;
+
+let config_info_command =
+  Command.basic
+    ~summary:"show config info"
+    (let%map_open.Command _ =
+       flag
+         ~full_flag_required:()
+         "-config-info"
+         (optional bool)
+         ~doc:"bool configuration info."
+     in
+     fun () -> Display_info.display_config ())
 ;;
 
 let db_new_command =
@@ -144,8 +151,9 @@ let cmd_group =
     [ "add", add_command
     ; "search", search_command
     ; "ls", ls_command
-    ; "config", set_config_command
-    ; "info", info_command
+    ; "config-set", set_config_command
+    ; "config-info", config_info_command
+    ; "tags", tags_info_command
     ; "db-new", db_new_command
     ; "db-switch", db_switch_command
     ]

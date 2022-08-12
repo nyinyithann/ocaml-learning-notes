@@ -4,6 +4,7 @@ module T = ANSITerminal
 let new_line () = printf "\n%!"
 let with_error_style msg = T.sprintf [ T.Foreground T.Red ] "%s" msg
 let with_ok_style msg = T.sprintf [ T.Foreground T.Green ] "%s" msg
+let with_cyan msg = T.sprintf [ T.Foreground T.Cyan ] "%s" msg
 let print_ok_msg msg = print_string (with_ok_style @@ sprintf "\n✅  %s\n%!" msg)
 let print_error_msg msg = print_string (with_error_style @@ sprintf "\n🌶  %s\n\n%!" msg)
 let show_empty () = print_error_msg "No bookmarks to display."

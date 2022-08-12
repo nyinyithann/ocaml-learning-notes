@@ -28,7 +28,7 @@ let get_tags v =
   |> map_input_to_result
 ;;
 
-let add_or_result ~url ~tags =
+let add_url ~url ~tags =
   new_line ();
   let ( let* ) = Result.( >>= ) in
   let* url = get_url url in
@@ -36,4 +36,4 @@ let add_or_result ~url ~tags =
   Data_store.add ~url ~tags
 ;;
 
-let add ~url ~tags = with_console_report ~f:(fun () -> add_or_result ~url ~tags)
+let add ~url ~tags = with_console_report ~f:(fun () -> add_url ~url ~tags)

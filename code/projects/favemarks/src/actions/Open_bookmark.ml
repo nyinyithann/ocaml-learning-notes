@@ -15,7 +15,7 @@ let get_links data =
     sprintf
       "Enter a number between 1 and %d inclusive or\n\
       \  comma-delimited letters from \'Key\' column or\n\
-      \  (empty to abort): "
+      \  empty to abort: "
       page_size
   and validate input =
     let input = String.strip input in

@@ -19,9 +19,9 @@ let show_menu ~state ~ls ~search ~go_home () =
               "");
     Queue.enqueue menu_text @@ Buffer.contents buffer
   in
-  add_prompt_msg [ "Add", "a"; "Search", "s"; "Next", "j"; "Export", "e" ];
-  add_prompt_msg [ "Update", "u"; "List", "l"; "Previous", "k"; "Quit", "q" ];
-  add_prompt_msg [ "Delete", "d"; "Open", "o"; "Info", "i" ];
+  add_prompt_msg [ "Add", "a"; "Search", "s"; "Config", "i"; "Next", "j" ];
+  add_prompt_msg [ "Update", "u"; "List", "l"; "Tags", "t"; "Previous", "k" ];
+  add_prompt_msg [ "Delete", "d"; "Open", "o"; "Export", "e"; "Quit", "q" ];
   print_lines @@ Queue.to_list menu_text;
   new_line ();
   T.print_string [ T.Foreground T.Green ] "⚡︎Your choice: ";
@@ -33,7 +33,7 @@ let show_menu ~state ~ls ~search ~go_home () =
 
   if Char.(c = 'a')
   then (
-    let r = Add_bookmark.add_or_result ~url:None ~tags:None in
+    let r = Add_bookmark.add_url ~url:None ~tags:None in
     State.set_status state (result_to_msg_opt r);
     go_home ~state)
   else if Char.(c = 'j') && current_page < total_pages - 1
@@ -61,7 +61,12 @@ let show_menu ~state ~ls ~search ~go_home () =
     go_home ~state)
   else if Char.(c = 'i')
   then (
-    let msg = Display_info.ask_and_display () in
+    let msg = Display_info.get_config_info () in
+    State.set_status state @@ msg;
+    go_home ~state)
+  else if Char.(c = 't')
+  then (
+    let msg = Display_info.get_tags_info () in
     State.set_status state @@ msg;
     go_home ~state)
   else if Char.(c = 'e')

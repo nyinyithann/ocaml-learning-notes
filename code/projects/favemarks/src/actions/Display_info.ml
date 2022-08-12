@@ -1,7 +1,5 @@
 open Core
-open Common
 open UI_display
-open UI_prompt
 module T = ANSITerminal
 
 let get_config_values () =
@@ -16,75 +14,49 @@ let get_config_values () =
 let get_title title =
   sprintf
     " %s\n %s\n"
-    (T.sprintf [ T.Foreground T.Green ] "%s" title)
-    (T.sprintf [ T.Foreground T.Green ] "%s" (String.make (String.length title) '-'))
+    (with_ok_style title)
+    (with_ok_style (String.make (String.length title) '-'))
 ;;
 
 let get_sub_info title value =
-  sprintf
-    "%s %s » %s\n%!"
-    (T.sprintf [ T.Foreground T.Green ] "%s" "●")
-    (T.sprintf [ T.Foreground T.Green ] "%s" title)
-    (T.sprintf [ T.Foreground T.Cyan ] "%s" value)
+  sprintf " %s %s » %s\n%!" (with_ok_style "●") (with_ok_style title) (with_cyan value)
 ;;
 
-let get_config_info (config_path, db_path, browser, page_size) =
-  sprintf
-    "\n%s %s %s %s %s"
-    (get_title "Configuration Info")
-    (get_sub_info "Config file path" config_path)
-    (get_sub_info "Db file path" db_path)
-    (get_sub_info "Browser to open url" browser)
-    (get_sub_info "Display records per page" @@ string_of_int page_size)
+let get_config_info () =
+  match get_config_values () with
+  | Ok (config_path, db_path, browser, page_size) ->
+    Some
+      (with_ok_style
+      @@ sprintf
+           "\n%s %s %s %s %s"
+           (get_title "Configuration Info")
+           (get_sub_info "Config file path" config_path)
+           (get_sub_info "Db file path" db_path)
+           (get_sub_info "Browser to open url" browser)
+           (get_sub_info "Display records per page" @@ string_of_int page_size))
+  | Error e -> Some (with_error_style e)
 ;;
 
-let get_tags_info ls =
-  sprintf
-    "\n%s %s"
-    (get_title "Tags")
-    (T.sprintf [ T.Foreground T.Green ] "%s\n" (String.concat ~sep:" " ls))
+let display_config () =
+  (match get_config_info () with
+   | Some s -> printf "%s" s
+   | _ -> ());
+  new_line ()
 ;;
 
-let yes_or_no input =
-  let si = strip_and_lowercase input in
-  String.(si = "y" || si = "n")
+let get_tags_info () =
+  match Data_store.get_tags () with
+  | Ok tl ->
+    Some
+      (with_ok_style
+      @@ sprintf "\n%s %s" (get_title "Tags") (with_ok_style (String.concat ~sep:" " tl))
+      )
+  | Error e -> Some (with_error_style e)
 ;;
 
-let will_show_tags () =
-  let msg = "Do you want to see tags (y/n)? " in
-  let retry_msg = "Please enter \'y\' or \'n\': " in
-  strip_and_lowercase @@ ask_again_if_invalid ~validate:yes_or_no ~msg ~retry_msg ()
-;;
-
-let ask_and_display () =
-  new_line ();
-  let t = will_show_tags () in
-  let r =
-    sprintf
-      "%s%s"
-      (match get_config_values () with
-       | Ok s -> sprintf "%s" @@ get_config_info s
-       | Error e -> sprintf "%s" e)
-      (if String.(t = "y")
-      then (
-        match Data_store.get_tags () with
-        | Ok tl -> sprintf "%s" @@ get_tags_info tl
-        | Error e -> sprintf "%s" e)
-      else "")
-  in
-  if String.(r = "") then None else Some r
-;;
-
-let display ?config_info ?tags_info () =
-  if Option.value config_info ~default:true
-  then (
-    match get_config_values () with
-    | Ok c -> printf "%s" @@ get_config_info c
-    | Error e -> print_error_msg e);
-  if Option.value tags_info ~default:false
-  then (
-    match Data_store.get_tags () with
-    | Ok tl -> printf "%s" @@ get_tags_info tl
-    | Error e -> print_error_msg e);
+let display_tags () =
+  (match get_tags_info () with
+   | Some s -> printf "%s\n%!" s
+   | _ -> ());
   new_line ()
 ;;
