@@ -1,5 +1,4 @@
 open Core
-open Core_compat
 
 let add_command =
   Command.basic
@@ -152,4 +151,9 @@ let cmd_group =
     ]
 ;;
 
-let () = Command_unix.run ~version:"0.0.1" ~build_info:"favemarks ver 0.0.1" cmd_group
+let () =
+  Command_unix.run
+    ~version:"1.0.0"
+    ~build_info:"The very first version of Favemarks"
+    cmd_group
+;;

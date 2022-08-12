@@ -4,13 +4,8 @@ module T = ANSITerminal
 let new_line () = printf "\n%!"
 let with_error_style msg = T.sprintf [ T.Foreground T.Red ] "%s" msg
 let with_ok_style msg = T.sprintf [ T.Foreground T.Green ] "%s" msg
-
-let print_ok_msg msg = T.print_string [ T.Foreground T.Green ] (sprintf "\n✅  %s\n%!" msg)
-
-let print_error_msg msg =
-  T.prerr_string [ T.Foreground T.Red ] (sprintf "\n🌶  %s\n\n%!" msg)
-;;
-
+let print_ok_msg msg = print_string (with_ok_style @@ sprintf "\n✅  %s\n%!" msg)
+let print_error_msg msg = print_string (with_error_style @@ sprintf "\n🌶  %s\n\n%!" msg)
 let show_empty () = print_error_msg "No bookmarks to display."
 
 let print_noti msg =
@@ -50,22 +45,25 @@ let show_status_info ~state =
   in
   let total_count_status = sprintf "⚑ Total in database: %d" total_count in
   let mode_status =
-    match mode with
-    | Some x ->
-      (match x with
-       | Model.List { sort_field; sort_order } ->
-         sprintf
-           "⚑ Listed all in \'%s\' order, by \'%s\' column."
-           (Option.value sort_order ~default:"")
-           (Option.value sort_field ~default:"")
-       | Model.Search { search_term; search_field; sort_field; sort_order } ->
-         sprintf
-           "⚑ Searched \'%s\' in \'%s\'. Sorted by \'%s\' order, by \'%s\' column."
-           search_term
-           search_field
-           (Option.value sort_order ~default:"")
-           (Option.value sort_field ~default:""))
-    | None -> ""
+    if total_count = 0
+    then ""
+    else (
+      match mode with
+      | Some x ->
+        (match x with
+         | Model.List { sort_field; sort_order } ->
+           sprintf
+             "⚑ Listed all in \'%s\' order, by \'%s\' column."
+             (Option.value sort_order ~default:"")
+             (Option.value sort_field ~default:"")
+         | Model.Search { search_term; search_field; sort_field; sort_order } ->
+           sprintf
+             "⚑ Searched \'%s\' in \'%s\'. Sorted in \'%s\' order, by \'%s\' column."
+             search_term
+             search_field
+             (Option.value sort_order ~default:"")
+             (Option.value sort_field ~default:""))
+      | None -> "")
   in
   let status_msg =
     match status with
@@ -130,5 +128,5 @@ let display_table state =
 let with_console_report ~(f : unit -> (string, string) result) =
   match f () with
   | Ok s -> print_ok_msg s
-  | Error e -> print_error_msg e
+  | Error e -> if String.(e = "") then () else print_error_msg e
 ;;

@@ -5,22 +5,28 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github nyinyithann/favemarks))
 
-(authors "Author Name")
+(authors "Nyi Nyi Than")
 
-(maintainers "Maintainer Name")
+(maintainers "Nyi Nyi Than")
 
-(license LICENSE)
+(license ISC)
 
-(documentation https://url/to/documentation)
+(documentation "https://github.com/nyinyithann/favemarks")
 
 (package
  (name fm)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml dune)
- (tags
-  (topics "to describe" your project)))
-
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
+ (synopsis "Favemarks: Your favourite bookmarks at your fingertips")
+ (description "A command line bookmark manager")
+ (depends 
+   (ocaml (>= 4.10.0))
+   dune
+   (core_compat (>= 0.15.0))
+   (sqlite3 (>= 5.1.0))
+   (ANSITerminal (>= 0.8.5))
+   (re (>= 1.10.4))
+   (textutils (>= 0.15.0))
+   (yojson (>= 2.0.1))
+   (tyxml (>= 4.5.0))
+ ))

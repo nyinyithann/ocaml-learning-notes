@@ -5,10 +5,13 @@ open UI_prompt
 open Tyxml.Html
 
 let get_format () =
-  let msg = {|Enter format to export ('json', 'md', 'html'): |}
-  and retry_msg = {|Format should be one of 'json', 'md', or 'html'.|}
-  and validate input = validate_fields [ "json"; "md"; "html" ] input in
-  strip_and_lowercase @@ ask_again_if_invalid ~validate ~msg ~retry_msg ()
+  let msg = {|Enter format to export - 'json', 'md', 'html' (empty to abort): |}
+  and retry_msg = {|Format should be 'json' or 'md' or 'html'.|}
+  and validate input =
+    validate_fields [ "json"; "md"; "html" ] input
+    || String.(strip_and_lowercase input = "")
+  in
+  strip_and_lowercase @@ ask_again_or_default ~validate ~msg ~retry_msg ""
 ;;
 
 let get_path ~format =
@@ -244,29 +247,32 @@ let to_html ~bookmarks ~path =
 let export ~go_home ~state =
   new_line ();
   let format = get_format () in
-  let path = get_path ~format in
-  match Data_store.get_bookmarks_without_pagination ~state with
-  | Ok bookmarks ->
-    if String.(format = "json")
-    then (
-      match to_json ~bookmarks ~path with
-      | Ok s -> State.set_status state (Some (with_ok_style s))
-      | Error e -> State.set_status state (Some (with_error_style e)));
+  if String.(format = "")
+  then go_home ~state
+  else (
+    let path = get_path ~format in
+    match Data_store.get_bookmarks_without_pagination ~state with
+    | Ok bookmarks ->
+      if String.(format = "json")
+      then (
+        match to_json ~bookmarks ~path with
+        | Ok s -> State.set_status state (Some (with_ok_style s))
+        | Error e -> State.set_status state (Some (with_error_style e)));
 
-    if String.(format = "md")
-    then (
-      match to_markdown ~bookmarks ~path with
-      | Ok s -> State.set_status state (Some (with_ok_style s))
-      | Error e -> State.set_status state (Some (with_error_style e)));
+      if String.(format = "md")
+      then (
+        match to_markdown ~bookmarks ~path with
+        | Ok s -> State.set_status state (Some (with_ok_style s))
+        | Error e -> State.set_status state (Some (with_error_style e)));
 
-    if String.(format = "html")
-    then (
-      match to_html ~bookmarks ~path with
-      | Ok s -> State.set_status state (Some (with_ok_style s))
-      | Error e -> State.set_status state (Some (with_error_style e)));
+      if String.(format = "html")
+      then (
+        match to_html ~bookmarks ~path with
+        | Ok s -> State.set_status state (Some (with_ok_style s))
+        | Error e -> State.set_status state (Some (with_error_style e)));
 
-    go_home ~state
-  | Error e ->
-    State.set_status state (Some e);
-    print_error_msg e
+      go_home ~state
+    | Error e ->
+      State.set_status state (Some e);
+      print_error_msg e)
 ;;

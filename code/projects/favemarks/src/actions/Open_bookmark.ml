@@ -10,10 +10,17 @@ type open_link =
 
 let get_links data =
   let r = ref Empty in
+  let page_size = Config_store.get_page_size () in
   let msg =
-    "Enter a number larger than 0 or comma-delimited letters from \'Key\' column: "
+    sprintf
+      "Enter a number between 1 and %d inclusive or\n\
+      \  comma-delimited letters from \'Key\' column or\n\
+      \  (empty to abort): "
+      page_size
   and validate input =
     let input = String.strip input in
+    String.(input = "")
+    ||
     match int_of_string_opt input with
     | Some n ->
       if n > 0
@@ -48,7 +55,7 @@ let get_links data =
           r := Empty;
           false))
   in
-  ignore @@ ask_again_if_invalid ~validate ~msg ~retry_msg:msg ();
+  ignore @@ ask_again_or_default ~validate ~msg ~retry_msg:msg "";
   !r
 ;;
 
@@ -91,60 +98,63 @@ let open_url url cout =
 
 let open_links ~state =
   new_line ();
-  let data = State.get_bookmarks state in
-  let links =
-    match get_links data with
-    | Number n -> List.take data n |> List.map ~f:(fun x -> x.Model.url)
-    | Links ls -> ls
-    | _ -> []
-  in
-  let fork_open_aux l =
-    let open Caml_unix in
-    let fd_in, fd_out = pipe () in
-    let cin = in_channel_of_descr fd_in in
-    let cout = out_channel_of_descr fd_out in
-    match fork () with
-    | 0 -> open_url l cout
-    | _ ->
-      let _, status = wait () in
-      (match status with
-       | WEXITED n when n > 130 ->
-         let s =
-           (* in_channel_length throws Illagle_seek error. Hence, work around it *)
-           with_error_style
-           @@ sprintf "Error at opening %s. %s." l
-           @@ Caml.really_input_string cin (n - 130)
-         in
-         In_channel.close cin;
-         s
-       | WEXITED n ->
-         In_channel.close cin;
-         if n = 0
-         then
-           with_ok_style
-           @@ sprintf
-                "%s is opened%s."
-                l
-                (sprintf " in %s"
-                @@ Option.value ~default:""
-                @@ Result.ok
-                @@ Config_store.get_open_with ())
-         else with_error_style @@ sprintf "Opening %s ended up with error code %d." l n
-       | WSIGNALED signal ->
-         In_channel.close cin;
-         with_error_style @@ sprintf "browser is killed by signal %d." signal
-       | WSTOPPED _ ->
-         In_channel.close cin;
-         with_error_style @@ sprintf "browser stopped.")
-  in
-  let fork_open ls =
-    let rec loop ls acc =
-      match ls with
-      | [] -> acc
-      | h :: t -> loop t (fork_open_aux h :: acc)
+  let bookmarks = State.get_bookmarks state in
+  if List.length bookmarks = 0
+  then with_error_style "No url to open."
+  else (
+    let links =
+      match get_links bookmarks with
+      | Number n -> List.take bookmarks n |> List.map ~f:(fun x -> x.Model.url)
+      | Links ls -> ls
+      | Empty -> []
     in
-    let msgs = loop ls [] in
-    String.concat ~sep:" " msgs
-  in
-  fork_open links
+    let fork_open_aux l =
+      let open Caml_unix in
+      let fd_in, fd_out = pipe () in
+      let cin = in_channel_of_descr fd_in in
+      let cout = out_channel_of_descr fd_out in
+      match fork () with
+      | 0 -> open_url l cout
+      | _ ->
+        let _, status = wait () in
+        (match status with
+         | WEXITED n when n > 130 ->
+           let s =
+             (* in_channel_length throws Illagle_seek error. Hence, work around it *)
+             with_error_style
+             @@ sprintf "Error at opening %s. %s." l
+             @@ Caml.really_input_string cin (n - 130)
+           in
+           In_channel.close cin;
+           s
+         | WEXITED n ->
+           In_channel.close cin;
+           if n = 0
+           then
+             with_ok_style
+             @@ sprintf
+                  "%s is opened%s."
+                  l
+                  (sprintf " in %s"
+                  @@ Option.value ~default:""
+                  @@ Result.ok
+                  @@ Config_store.get_open_with ())
+           else with_error_style @@ sprintf "Opening %s ended up with error code %d." l n
+         | WSIGNALED signal ->
+           In_channel.close cin;
+           with_error_style @@ sprintf "browser is killed by signal %d." signal
+         | WSTOPPED _ ->
+           In_channel.close cin;
+           with_error_style @@ sprintf "browser stopped.")
+    in
+    let fork_open ls =
+      let rec loop ls acc =
+        match ls with
+        | [] -> acc
+        | h :: t -> loop t (fork_open_aux h :: acc)
+      in
+      let msgs = loop ls [] in
+      String.concat ~sep:" " msgs
+    in
+    fork_open links)
 ;;

@@ -5,10 +5,16 @@ let is_whitespace s = s |> String.strip |> String.is_empty
 let strip_and_lowercase s = String.(lowercase @@ strip s)
 let epoch_str () = Time_unix.to_string Time_unix.epoch
 
+let map_input_to_result input =
+  if String.(strip_and_lowercase input = "") then Error "" else Ok input
+;;
+
 let result_to_msg_opt (r : (string, string) result) =
   match r with
-  | Ok s -> Some (T.sprintf [ T.Foreground T.Green ] "%s" s)
-  | Error e -> Some (T.sprintf [ T.Foreground T.Red ] "%s" e)
+  | Ok s ->
+    if String.(s = "") then None else Some (T.sprintf [ T.Foreground T.Green ] "%s" s)
+  | Error e ->
+    if String.(e = "") then None else Some (T.sprintf [ T.Foreground T.Red ] "%s" e)
 ;;
 
 let time_of_string str =
@@ -39,7 +45,7 @@ let strip_space_and_concat ~sep str =
   str |> String.split ~on:',' |> List.map ~f:String.strip |> String.concat ~sep
 ;;
 
-let validate_url url =
+let is_url_valid url =
   let re =
     Re.Perl.re
       {|((http|https)://)?(www.)?[a-zA-Z0-9@:%._\+~#?&//=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%._\+~#?&//=]*)|}
@@ -54,8 +60,8 @@ let validate_tags tags =
      @@ String.(
           split tags ~on:','
           |> List.exists ~f:(fun x ->
-                 let sx = strip x in
-                 sx = "" || exists sx ~f:Char.is_whitespace)))
+               let sx = strip x in
+               sx = "" || exists sx ~f:Char.is_whitespace)))
 ;;
 
 let validate_fields fields input =

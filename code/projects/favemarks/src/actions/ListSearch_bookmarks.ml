@@ -43,7 +43,7 @@ end = struct
     match Data_store.ls ~state with
     | Ok state ->
       display_table state;
-      show_menu ~state ~ls ~search:Search.search ~fn_aux:ls_aux ()
+      show_menu ~state ~ls ~search:Search.search ~go_home:ls_aux ()
     | Error e -> print_error_msg e
 
   and ls ?sort_field ?sort_order () =
@@ -97,7 +97,7 @@ end = struct
     match Data_store.search ~state with
     | Ok state ->
       display_table state;
-      show_menu ~state ~ls:Ls.ls ~search ~fn_aux:search_aux ()
+      show_menu ~state ~ls:Ls.ls ~search ~go_home:search_aux ()
     | Error e -> print_error_msg e
 
   and search ~search_term ~search_field ~sort_field ~sort_order () =

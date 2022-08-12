@@ -4,7 +4,7 @@ open UI_display
 open UI_prompt
 
 let get_key bookmarks =
-  let msg = "Enter a key (empty to skip): " in
+  let msg = "Enter a key (empty to abort): " in
   let retry_msg = "Key is not found in the displaying records. Please try again." in
   let keys = bookmarks |> List.map ~f:(fun x -> x.Model.mnemonic) in
   let validate input = validate_fields keys input in
@@ -13,14 +13,14 @@ let get_key bookmarks =
 
 let get_modified_url existing_url =
   print_noti (sprintf "Existing url: %s" existing_url);
-  let msg = "Enter a url (empty to skip): "
+  let msg = "Enter a url (empty to use existing one): "
   and retry_msg = "A valid url must be provided." in
-  ask_again_or_default ~validate:validate_url ~msg ~retry_msg existing_url
+  ask_again_or_default ~validate:is_url_valid ~msg ~retry_msg existing_url
 ;;
 
 let get_modified_tags existing_tags =
   print_noti (sprintf "Existing tags: %s" existing_tags);
-  let msg = "Enter comma-delimited tags (empty to skip): "
+  let msg = "Enter comma-delimited tags (empty to use existing ones): "
   and retry_msg =
     "One or more comma-delimited tags must be provided. Tags should not have space."
   in

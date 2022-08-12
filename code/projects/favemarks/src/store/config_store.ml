@@ -26,12 +26,12 @@ let get_config () =
     try
       In_channel.read_lines @@ Lazy.force @@ get_config_path_full ()
       |> List.fold ~init:[] ~f:(fun acc x ->
-             if String.length x > 0
-             then (
-               match String.split x ~on:'=' |> Common.tuple_of_first_two with
-               | Some (fst, snd) -> String.(strip fst, strip snd) :: acc
-               | None -> acc)
-             else acc)
+           if String.length x > 0
+           then (
+             match String.split x ~on:'=' |> Common.tuple_of_first_two with
+             | Some (fst, snd) -> String.(strip fst, strip snd) :: acc
+             | None -> acc)
+           else acc)
       |> Ok
     with
     | e -> Error (Exn.to_string e))
@@ -55,14 +55,14 @@ let get_db_path () =
   | Some v -> set_cache_and_return v
   | None ->
     (match get_config () with
-    | Ok l ->
-      (match
-         List.find l ~f:(fun (fst, _) ->
-             String.(equal (strip_and_lowercase fst) (lowercase db_path_key)))
-       with
-      | Some (_, snd) -> set_cache_and_return (String.strip snd)
-      | _ -> config_not_found_error_msg db_path_key)
-    | Error _ as e -> e)
+     | Ok l ->
+       (match
+          List.find l ~f:(fun (fst, _) ->
+            String.(equal (strip_and_lowercase fst) (lowercase db_path_key)))
+        with
+        | Some (_, snd) -> set_cache_and_return (String.strip snd)
+        | _ -> config_not_found_error_msg db_path_key)
+     | Error _ as e -> e)
 ;;
 
 let get_open_with () =
@@ -73,18 +73,18 @@ let get_open_with () =
       Ok v
     in
     (match Hashtbl.find cache open_with_key with
-    | Some v -> set_cache_and_return v
-    | None ->
-      (match get_config () with
-      | Ok l ->
-        (match
-           List.find l ~f:(fun (fst, _) ->
+     | Some v -> set_cache_and_return v
+     | None ->
+       (match get_config () with
+        | Ok l ->
+          (match
+             List.find l ~f:(fun (fst, _) ->
                String.(equal (strip_and_lowercase fst) (lowercase open_with_key)))
-         with
-        | Some (_, snd) -> set_cache_and_return (String.strip snd)
-        | _ -> set_cache_and_return "Chrome")
-      | _ -> set_cache_and_return "Chrome"))
-  | _ -> Ok "Default Browser"
+           with
+           | Some (_, snd) -> set_cache_and_return (String.strip snd)
+           | _ -> set_cache_and_return Common.Browser.chrome_key)
+        | _ -> set_cache_and_return Common.Browser.chrome_key))
+  | _ -> Ok Common.Browser.other_os_default_browser
 ;;
 
 let get_page_size () =
@@ -106,14 +106,14 @@ let get_page_size () =
   | Some v -> set_cache_and_return v
   | None ->
     (match get_config () with
-    | Ok l ->
-      (match
-         List.find l ~f:(fun (fst, _) ->
-             String.(equal (strip_and_lowercase fst) (lowercase page_size_key)))
-       with
-      | Some (_, snd) -> set_cache_and_return snd
-      | _ -> set_cache_and_return (string_of_int default_page_size))
-    | _ -> set_cache_and_return (string_of_int default_page_size))
+     | Ok l ->
+       (match
+          List.find l ~f:(fun (fst, _) ->
+            String.(equal (strip_and_lowercase fst) (lowercase page_size_key)))
+        with
+        | Some (_, snd) -> set_cache_and_return snd
+        | _ -> set_cache_and_return (string_of_int default_page_size))
+     | _ -> set_cache_and_return (string_of_int default_page_size))
 ;;
 
 let save_data data =

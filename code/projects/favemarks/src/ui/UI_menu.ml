@@ -4,7 +4,7 @@ open UI_prompt
 open Common
 module T = ANSITerminal
 
-let show_menu ~state ~ls ~search ~fn_aux () =
+let show_menu ~state ~ls ~search ~go_home () =
   let menu_text = Queue.create () in
   let add_prompt_msg l =
     let buffer = Buffer.create 80 in
@@ -33,39 +33,40 @@ let show_menu ~state ~ls ~search ~fn_aux () =
 
   if Char.(c = 'a')
   then (
-    let r = Add_bookmark.add_with_return ~url:None ~tags:None in
+    let r = Add_bookmark.add_or_result ~url:None ~tags:None in
     State.set_status state (result_to_msg_opt r);
-    fn_aux ~state)
+    go_home ~state)
   else if Char.(c = 'j') && current_page < total_pages - 1
   then (
     State.set_current_page state (State.get_current_page state + 1);
     State.set_status state None;
-    fn_aux ~state)
+    go_home ~state)
   else if Char.(c = 'k') && current_page > 0
   then (
     State.set_current_page state (State.get_current_page state - 1);
     State.set_status state None;
-    fn_aux ~state)
+    go_home ~state)
   else if Char.(c = 's')
   then search ~search_term:None ~search_field:None ~sort_field:None ~sort_order:None ()
   else if Char.(c = 'l')
   then ls ?sort_field:None ?sort_order:None ()
   else if Char.(c = 'u')
-  then Update_bookmark.update ~go_home:fn_aux ~state
+  then Update_bookmark.update ~go_home ~state
   else if Char.(c = 'd')
-  then Delete_bookmark.delete ~go_home:fn_aux ~state
+  then Delete_bookmark.delete ~go_home ~state
   else if Char.(c = 'o')
   then (
-    State.set_status state @@ Some (Open_bookmark.open_links ~state);
-    fn_aux ~state)
+    let msg = Open_bookmark.open_links ~state in
+    State.set_status state (if String.(msg = "") then None else Some msg);
+    go_home ~state)
   else if Char.(c = 'i')
   then (
     let msg = Display_info.ask_and_display () in
     State.set_status state @@ msg;
-    fn_aux ~state)
+    go_home ~state)
   else if Char.(c = 'e')
-  then Export_bookmarks.export ~go_home:fn_aux ~state
+  then Export_bookmarks.export ~go_home ~state
   else if Char.(c = 'q')
   then new_line ()
-  else fn_aux ~state
+  else go_home ~state
 ;;
