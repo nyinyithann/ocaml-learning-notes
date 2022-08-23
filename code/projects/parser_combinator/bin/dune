@@ -1,4 +1,6 @@
 (executable
  (public_name pc)
- (name main)
- (libraries pc))
+ (name main))
+(env
+  (dev
+    (flags (:standard -w -27 -w -69 -w -32 -w -26))))

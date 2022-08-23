@@ -90,7 +90,7 @@ let rec many p =
   <|> return []
 ;;
 
-let rec many1 p =
+let many1 p =
   let* x = p in
   let* xs = many p in
   return (x :: xs)
@@ -112,6 +112,15 @@ let sepby1 p sep =
 let sepby p sep = sepby1 p sep <|> return []
 
 module P = struct
+  (*  let explode s =  *)
+  (*      let rec aux i l = if i < 0 then l else aux (i - 1) (s.[i] :: l)  *)
+  (*      in aux (String.length s - 1) [] in *)
+  (*  *)
+  (* let implode l =  *)
+  (*      let r = Bytes.create (List.length l) in *)
+  (*      let rec aux i = function [] -> r | h :: t -> Bytes.set r i h ; aux (i + 1) l  *)
+  (*      in (aux 0 l) |> Bytes.unsafe_to_string in *)
+
   let char_parser ch : char parser =
     let p stream =
       let open Printf in
@@ -190,4 +199,4 @@ module P = struct
   ;;
 end
 
-open P
+(* open P *)
