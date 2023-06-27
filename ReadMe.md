@@ -1,4 +1,4 @@
-# My Notes On OCaml
+# My OCaml learning notes
 
 My OCaml learning notes from the following materials:
 - [The OCaml Manual](https://v2.ocaml.org/manual/)
